@@ -574,6 +574,7 @@ select option{background:#041420;color:var(--text)}
 .onboardTitle{font-family:'Syne',sans-serif;font-size:2.4rem;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
 .onboardSub{color:var(--muted);font-size:1rem;line-height:1.6}
 .onboardBtns{display:grid;gap:10px;margin-top:8px}
+.onboardBtns .btn,.slideNav .btn{pointer-events:auto}
 /* Slide show */
 .onboardSlides{display:none;position:relative;overflow:hidden}
 .onboardSlides.active{display:block}
@@ -1295,6 +1296,7 @@ function goSlide(n){
 // ── INIT ───────────────────────────────────────
 function init(){
   loadState();
+  initOnboard();
   applyTheme();
   bindEvents();
   syncVol();
@@ -1305,7 +1307,6 @@ function init(){
   if(ST.cur&&!ST.settings.autoplay)loadTrack(ST.cur,false,true);
   if(ST.settings.autoplay&&ST.cur){loadTrack(ST.cur,false,true);tryPlay();}
   window.addEventListener('resize',resizeCanvases);
-  initOnboard();
   // Tab scroll thumb update
   el.tabList.addEventListener('scroll',updateTabThumb);
   updateTabThumb();
@@ -1372,10 +1373,10 @@ function bindEvents(){
   el.startBtn.onclick=()=>switchTab(ST.tracks.length?'player':'library');
   el.openLibBtn.onclick=()=>switchTab('library');
   el.openSetBtn.onclick=()=>switchTab('settings');
-  el.heroGoogleBtn.onclick=()=>openGoogleConnect();
-  el.cloudHubBtn.onclick=()=>switchTab('cloud');
-  el.libraryGoogleBtn.onclick=()=>openGoogleConnect();
-  el.libraryCloudOpenBtn.onclick=()=>switchTab('cloud');
+  if(el.heroGoogleBtn)el.heroGoogleBtn.onclick=()=>openGoogleConnect();
+  if(el.cloudHubBtn)el.cloudHubBtn.onclick=()=>switchTab('cloud');
+  if(el.libraryGoogleBtn)el.libraryGoogleBtn.onclick=()=>openGoogleConnect();
+  if(el.libraryCloudOpenBtn)el.libraryCloudOpenBtn.onclick=()=>switchTab('cloud');
   // Files
   el.fileInput.onchange=e=>handleFiles(e.target.files);
   el.fileInput2.onchange=e=>handleFiles(e.target.files);
@@ -2137,8 +2138,10 @@ init();
    OAuth 2.0 PKCE + Google Drive API v3
 ══════════════════════════════════════════════════ */
 
+const DEFAULT_GOOGLE_CLIENT_ID='1063106381116-gb445u39i9qcp7trspo6qkfm280hc335.apps.googleusercontent.com';
+
 const CLOUD={
-  clientId: localStorage.getItem('delta-gclient')||'',
+  clientId: localStorage.getItem('delta-gclient')||DEFAULT_GOOGLE_CLIENT_ID,
   token: null,
   tokenExpiry: 0,
   user: null,
@@ -2149,7 +2152,7 @@ const CLOUD={
 
 // ── Init Cloud ─────────────────────────────────
 function initCloud(){
-  CLOUD.clientId = localStorage.getItem('delta-gclient')||'';
+  CLOUD.clientId = localStorage.getItem('delta-gclient')||DEFAULT_GOOGLE_CLIENT_ID;
   try{ CLOUD.cloudMeta = JSON.parse(localStorage.getItem('delta-cloudmeta')||'{}'); }catch(_){}
   // Restore session if token still valid
   const savedToken = localStorage.getItem('delta-gtoken');
@@ -2222,6 +2225,11 @@ function renderCloudUI(){
   const auth = document.getElementById('cloudAuthSection');
   const logged = document.getElementById('cloudLoggedSection');
   const badge = document.getElementById('cloudStatusBadge');
+  const input = document.getElementById('clientIdInput');
+
+  if(input && !input.value){
+    input.value = CLOUD.clientId || DEFAULT_GOOGLE_CLIENT_ID;
+  }
 
   if(!CLOUD.clientId){
     setup.style.display='';auth.style.display='none';logged.style.display='none';

@@ -389,6 +389,9 @@ body::after{
 .trackItem{display:grid;grid-template-columns:42px 1fr auto 38px;gap:11px;align-items:center;padding:11px;border-radius:16px;background:rgba(6,22,38,.72);border:1px solid var(--line);transition:.2s;cursor:pointer}
 .trackItem:hover{background:rgba(8,32,56,.84);border-color:var(--line2);transform:translateY(-2px) perspective(800px) rotateX(2deg);box-shadow:0 12px 30px rgba(0,10,26,.28)}
 .trackItem.active{background:linear-gradient(135deg,rgba(14,66,100,.76),rgba(4,18,34,.92));border-color:rgba(80,200,255,.32);box-shadow:0 0 20px rgba(80,200,255,.1)}
+.trackItem.ghost{opacity:.68}
+.trackItem.ghost .trackIndex{background:rgba(40,40,56,.72);color:#a4b8c4}
+.ghostAction{padding:0 10px;height:36px;border-radius:11px;font-size:.76rem}
 .trackIndex{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(8,30,50,.9);color:var(--muted);border:1px solid var(--line);font-size:.86rem;flex-shrink:0;transition:.2s}
 .trackItem.active .trackIndex{background:var(--grad);color:#031a28;font-weight:800;border:none}
 .lineCopy{min-width:0}
@@ -398,6 +401,7 @@ body::after{
 .miniItem{display:grid;grid-template-columns:40px 1fr auto;gap:9px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(6,22,38,.7);border:1px solid var(--line);transition:.2s;cursor:pointer}
 .miniItem:hover{background:rgba(8,32,56,.84);border-color:var(--line2);transform:translateY(-2px)}
 .miniItem.active{background:linear-gradient(135deg,rgba(14,66,100,.76),rgba(4,18,34,.92));border-color:rgba(80,200,255,.32)}
+.miniItem.ghost{opacity:.7}
 .thumb{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(80,200,255,.2),rgba(140,180,255,.1));color:#cce8f8;font-size:.88rem;flex-shrink:0}
 
 /* ── LIBRARY ─────────────────────────────────────── */
@@ -1348,6 +1352,7 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
     <div class="dropText">Перетащите сюда аудиофайлы, и они мягко вольются в медиатеку, плейлист и облачную синхронизацию.</div>
   </div>
 </div>
+<input class="uploadInput" type="file" id="rebindFileInput" accept="audio/*">
 
 <!-- EXPORT MODAL -->
 <div class="exportModal" id="exportModal">
@@ -1440,6 +1445,7 @@ const el={
   volInput:$('volInput'),favCurBtn:$('favCurBtn'),
   playlistList:$('playlistList'),plCount:$('plCount'),queueList:$('queueList'),playFirstBtn:$('playFirstBtn'),
   fileInput:$('fileInput'),fileInput2:$('fileInput2'),clearLibBtn:$('clearLibBtn'),libraryGoogleBtn:$('libraryGoogleBtn'),libraryCloudOpenBtn:$('libraryCloudOpenBtn'),
+  rebindFileInput:$('rebindFileInput'),
   libraryGrid:$('libraryGrid'),
   favoritesList:$('favoritesList'),recentList:$('recentList'),
   settingsList:$('settingsList'),
@@ -1468,6 +1474,7 @@ const vizCtx=el.vizCanvas.getContext('2d');
 let AC=null,analyser=null,srcNode=null,freqData=null,waveData=null;
 let fSub=null,fLow=null,fMid=null,fPres=null,fHigh=null,sPanner=null,mGain=null;
 let curSlide=0;
+let pendingRebindTrackId=null;
 const TOTAL_SLIDES=5;
 const ONBOARD_HINTS=[
   'Короткое знакомство с DELTA',
@@ -1634,6 +1641,7 @@ function bindEvents(){
   // Files
   el.fileInput.onchange=e=>handleFiles(e.target.files);
   el.fileInput2.onchange=e=>handleFiles(e.target.files);
+  el.rebindFileInput.onchange=e=>rebindTrackFile(e.target.files?.[0]);
   el.clearLibBtn.onclick=clearLib;
   el.playFirstBtn.onclick=()=>{const t=filteredTracks();if(t.length)loadTrack(t[0].id,true)};
   // Search
@@ -1720,6 +1728,7 @@ function switchTab(tab,instant=false){
     requestAnimationFrame(()=>requestAnimationFrame(()=>target.classList.add('active')));
   }
   if(tab==='sound')setTimeout(()=>{resizeCanvases();drawEQCurve()},80);
+  if(tab==='settings')setTimeout(()=>renderSettings(),40);
   applyTheme();
   updateMini();
   saveState();
@@ -1776,17 +1785,19 @@ function loadTrack(id,play=false,restore=false){
   ST.cur=id;
   if(!restore)ST.curTime=0;
   if(ST.objUrl){URL.revokeObjectURL(ST.objUrl);ST.objUrl=null}
-  if(track.file instanceof File){ST.objUrl=URL.createObjectURL(track.file);audio.src=ST.objUrl;audio.load();}
+  if(hasPlayableFile(track)){ST.objUrl=URL.createObjectURL(track.file);audio.src=ST.objUrl;audio.load();}
   else{audio.removeAttribute('src');audio.load();}
   addRecent(id);
   renderAll();
   if(ST.activeTab!=='sound'&&ST.activeTab!=='settings')switchTab('player');
-  if(play&&track.file instanceof File)tryPlay();
+  if(play&&hasPlayableFile(track))tryPlay();
+  else if(play&&!restore)notifyMissingFile(track);
   updateMini();
 }
 async function tryPlay(){
   const t=curTrack();if(!t)return;
-  if(!audio.src&&t.file instanceof File){ST.objUrl=URL.createObjectURL(t.file);audio.src=ST.objUrl;audio.load();}
+  if(!hasPlayableFile(t)){notifyMissingFile(t);switchTab('library');return}
+  if(!audio.src&&hasPlayableFile(t)){ST.objUrl=URL.createObjectURL(t.file);audio.src=ST.objUrl;audio.load();}
   try{
     await ensureAC();
     audio.playbackRate=ST.speed;
@@ -1883,6 +1894,32 @@ function sceneLabel(){
 function emptyState(icon,title,text){
   return `<div class="emptyState"><div class="emptyStateIcon">${icon}</div><div class="emptyStateTitle">${title}</div><div class="emptyStateText">${text}</div></div>`;
 }
+function hasPlayableFile(track){return track?.file instanceof File}
+function notifyMissingFile(track){
+  const title=track?.title||'Этот трек';
+  alert(`${title} пока нельзя воспроизвести.\n\nНа публичном сайте браузер не может восстановить локальный аудиофайл после перезагрузки страницы. Нужно заново выбрать файл в медиатеке или импортировать HTML-архив/скачать трек из облака.`);
+}
+function promptRebindTrack(id){
+  pendingRebindTrackId=id;
+  el.rebindFileInput.value='';
+  el.rebindFileInput.click();
+}
+function rebindTrackFile(file){
+  const track=ST.tracks.find(t=>t.id===pendingRebindTrackId);
+  pendingRebindTrackId=null;
+  if(!track||!(file instanceof File))return;
+  track.file=file;
+  track.fileName=file.name;
+  track.size=file.size;
+  track.type=file.type||track.type||'audio/mpeg';
+  const parsed=parseName(file.name);
+  if(track.artist==='Неизвестный' || !track.artist)track.artist=parsed.artist;
+  if(!track.title || track.title===track.fileName?.replace(/\.[^.]+$/,''))track.title=parsed.title;
+  saveState();
+  renderAll();
+  if(ST.cur===track.id)loadTrack(track.id,false,true);
+  alert(`Файл для "${track.title}" снова привязан. Теперь трек можно слушать.`);
+}
 
 // ── RENDER ALL ─────────────────────────────────
 function renderAll(){
@@ -1976,11 +2013,13 @@ function renderPlaylist(){
   el.plCount.textContent=`${tracks.length} ${plurTracks(tracks.length)}`;
   if(!tracks.length){el.playlistList.innerHTML=ST.tracks.length?emptyState('🔎','Ничего не найдено','Попробуйте изменить запрос или очистить поиск, чтобы DELTA снова показала доступные треки.'):emptyState('🎵','Медиатека ждёт музыку','Загрузите первые аудиофайлы и DELTA сразу соберёт красивый плейлист.');bindDyn();return}
   el.playlistList.innerHTML=tracks.map((t,i)=>`
-    <div class="trackItem${t.id===ST.cur?' active':''}" data-play="${t.id}">
+    <div class="trackItem${t.id===ST.cur?' active':''}${hasPlayableFile(t)?'':' ghost'}" data-play="${t.id}">
       <div class="trackIndex" data-play="${t.id}">${t.id===ST.cur&&ST.playing?'♪':String(i+1).padStart(2,'0')}</div>
-      <div class="lineCopy" data-play="${t.id}"><strong>${esc(t.title)}</strong><span>${esc(t.artist)} · ${esc(t.fileName||'')}</span></div>
+      <div class="lineCopy" data-play="${t.id}"><strong>${esc(t.title)}</strong><span>${esc(t.artist)} · ${esc(t.fileName||'')} ${hasPlayableFile(t)?'':'· файл нужно выбрать снова'}</span></div>
       <div class="duration">${fmtTime(t.duration)}</div>
-      <button class="favBtn${t.favorite?' active':''}" data-fav="${t.id}">${t.favorite?'♥':'♡'}</button>
+      ${hasPlayableFile(t)
+        ? `<button class="favBtn${t.favorite?' active':''}" data-fav="${t.id}">${t.favorite?'♥':'♡'}</button>`
+        : `<button class="btn ghostAction" data-repick="${t.id}">Файл</button>`}
     </div>`).join('');
   bindDyn();
 }
@@ -2043,37 +2082,43 @@ function renderFocus(){
   if(el.metaCloud)el.metaCloud.textContent=cloudReady?.token?(cloudReady.syncing?'Синхронизация':'Google Drive'):t?.file instanceof File?'Локально':'Офлайн';
 }
 function renderSettings(){
-  el.settingsList.innerHTML=SCHEMA.map(item=>{
-    if(item.type==='action')return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong></div><div class="setBody">${item.desc}</div><div class="setRow"><button class="btn danger" data-action="${item.action}">Сбросить всё</button></div></div>`;
-    if(item.type==='toggle'){const on=ST.settings[item.key];return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong><em>${on?'Вкл':'Выкл'}</em></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setLabel">${item.label}</span><button class="toggle${on?' active':''}" data-tog="${item.key}"></button></div></div>`}
-    if(item.type==='range'){const v=ST.settings[item.key];return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong><em>${item.fmt(v)}</em></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setLabel">${item.label}</span><input type="range" class="rangeInput" min="${item.min}" max="${item.max}" step="${item.step}" value="${v}" data-rng="${item.key}" style="width:130px"></div></div>`}
-    const v=item.isViz?ST.vizStyle:ST.settings[item.key];
-    return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setLabel">${item.label}</span><select data-sel="${item.key}">${item.opts.map(o=>`<option value="${o.v}"${o.v===v?' selected':''}>${o.l}</option>`).join('')}</select></div></div>`;
-  }).join('');
-  // Bind — e.stopPropagation() prevents glass from swallowing events
-  el.settingsList.querySelectorAll('[data-rng]').forEach(el=>{
-    el.addEventListener('input',e=>{e.stopPropagation();ST.settings[e.target.dataset.rng]=+e.target.value;applyTheme();saveState();renderSettings()});
+  if(!el.settingsList)return;
+  try{
+    el.settingsList.innerHTML=SCHEMA.map(item=>{
+      if(item.type==='action')return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong></div><div class="setBody">${item.desc}</div><div class="setRow"><button class="btn danger" data-action="${item.action}">Сбросить всё</button></div></div>`;
+      if(item.type==='toggle'){const on=!!ST.settings[item.key];return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong><em>${on?'Вкл':'Выкл'}</em></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setLabel">${item.label}</span><button class="toggle${on?' active':''}" data-tog="${item.key}"></button></div></div>`}
+      if(item.type==='range'){const v=Number(ST.settings[item.key]??item.min??0);return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong><em>${item.fmt(v)}</em></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setLabel">${item.label}</span><input type="range" class="rangeInput" min="${item.min}" max="${item.max}" step="${item.step}" value="${v}" data-rng="${item.key}" style="width:130px"></div></div>`}
+      const v=item.isViz?ST.vizStyle:(ST.settings[item.key]??item.opts?.[0]?.v??'');
+      return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setLabel">${item.label}</span><select data-sel="${item.key}">${(item.opts||[]).map(o=>`<option value="${o.v}"${o.v===v?' selected':''}>${o.l}</option>`).join('')}</select></div></div>`;
+    }).join('');
+  }catch(err){
+    console.warn('renderSettings failed', err);
+    el.settingsList.innerHTML=emptyState('⚙','Настройки временно недоступны','Попробуйте перезагрузить страницу. Если проблема повторится, нажмите «Сбросить всё» ниже.')+`<div class="setCard"><div class="setRow"><button class="btn danger" data-action="reset">Сбросить всё</button></div></div>`;
+  }
+  el.settingsList.querySelectorAll('[data-rng]').forEach(node=>{
+    node.addEventListener('input',e=>{e.stopPropagation();ST.settings[e.target.dataset.rng]=+e.target.value;applyTheme();saveState();renderSettings()});
   });
-  el.settingsList.querySelectorAll('[data-sel]').forEach(el=>{
-    el.addEventListener('change',e=>{e.stopPropagation();const k=e.target.dataset.sel;if(k==='vizStyle')ST.vizStyle=e.target.value;else ST.settings[k]=e.target.value;applyTheme();saveState();renderSettings()});
+  el.settingsList.querySelectorAll('[data-sel]').forEach(node=>{
+    node.addEventListener('change',e=>{e.stopPropagation();const k=e.target.dataset.sel;if(k==='vizStyle')ST.vizStyle=e.target.value;else ST.settings[k]=e.target.value;applyTheme();saveState();renderSettings()});
   });
-  el.settingsList.querySelectorAll('[data-tog]').forEach(el=>{
-    el.addEventListener('click',e=>{e.stopPropagation();const k=e.currentTarget.dataset.tog;ST.settings[k]=!ST.settings[k];applyTheme();saveState();renderSettings()});
+  el.settingsList.querySelectorAll('[data-tog]').forEach(node=>{
+    node.addEventListener('click',e=>{e.stopPropagation();const k=e.currentTarget.dataset.tog;ST.settings[k]=!ST.settings[k];applyTheme();saveState();renderSettings();renderTransport();updateMini()});
   });
-  el.settingsList.querySelectorAll('[data-action]').forEach(el=>{
-    el.addEventListener('click',e=>{e.stopPropagation();if(e.currentTarget.dataset.action==='reset'){if(confirm('Сбросить DELTA?')){localStorage.removeItem(SK);location.reload()}}});
+  el.settingsList.querySelectorAll('[data-action]').forEach(node=>{
+    node.addEventListener('click',e=>{e.stopPropagation();if(e.currentTarget.dataset.action==='reset'){if(confirm('Сбросить DELTA?')){localStorage.removeItem(SK);location.reload()}}});
   });
 }
 function renderMeta(){
   el.trackCount.textContent=`${ST.tracks.length} ${plurTracks(ST.tracks.length)} в медиатеке`;
-  el.storageInfo.textContent=ST.tracks.some(t=>!(t.file instanceof File))?'Файлы нужно выбрать снова после перезагрузки':'Метаданные синхронизированы';
+  el.storageInfo.textContent=ST.tracks.some(t=>!hasPlayableFile(t))?'На публичном сайте локальные файлы нужно выбирать заново после перезагрузки':'Метаданные синхронизированы';
 }
 function miniRow(t,icon,active=false){
-  return `<div class="miniItem${active?' active':''}" data-play="${t.id}"><div class="thumb">${icon}</div><div class="miniCopy" data-play="${t.id}"><strong>${esc(t.title)}</strong><span>${esc(t.artist)}</span></div><div class="duration">${fmtTime(t.duration)}</div></div>`;
+  return `<div class="miniItem${active?' active':''}${hasPlayableFile(t)?'':' ghost'}" data-play="${t.id}"><div class="thumb">${icon}</div><div class="miniCopy" data-play="${t.id}"><strong>${esc(t.title)}</strong><span>${esc(t.artist)}${hasPlayableFile(t)?'':' · недоступен без файла'}</span></div><div class="duration">${fmtTime(t.duration)}</div></div>`;
 }
 function bindDyn(){
   document.querySelectorAll('[data-play]').forEach(n=>n.onclick=e=>loadTrack(e.currentTarget.dataset.play,true));
   document.querySelectorAll('[data-fav]').forEach(n=>n.onclick=e=>{e.stopPropagation();toggleFav(e.currentTarget.dataset.fav)});
+  document.querySelectorAll('[data-repick]').forEach(n=>n.onclick=e=>{e.stopPropagation();promptRebindTrack(e.currentTarget.dataset.repick)});
 }
 
 // ── MINI PLAYER ────────────────────────────────

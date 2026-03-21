@@ -406,6 +406,20 @@ select option{background:#041420;color:var(--text)}
 .google-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 20px;border-radius:13px;cursor:pointer;background:rgba(255,255,255,.94);border:1px solid rgba(0,0,0,.12);color:#3c4043;font-size:.88rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.16);transition:.2s}
 .google-btn:hover{background:#fff;box-shadow:0 4px 16px rgba(0,0,0,.22);transform:translateY(-1px)}
 .google-icon{width:20px;height:20px;flex-shrink:0}
+.google-btn.primary-connect{background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(230,247,255,.96));border-color:rgba(110,220,240,.26);box-shadow:0 12px 28px rgba(0,0,0,.16),0 0 24px rgba(94,232,255,.12)}
+.cloudHeroBand{margin-top:16px;padding:16px 18px;border-radius:18px;border:1px solid rgba(110,220,240,.14);background:linear-gradient(135deg,rgba(7,27,46,.82),rgba(8,36,62,.64));display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.cloudHeroBand strong{display:block;font-size:.96rem}
+.cloudHeroBand p{margin-top:4px;color:var(--muted);font-size:.84rem;line-height:1.55;max-width:54ch}
+.cloudHeroActions{display:flex;gap:10px;flex-wrap:wrap}
+.cloudHint{font-size:.78rem;color:var(--soft)}
+.libraryCloudBar{margin-top:18px;padding:16px 18px;border-radius:18px;border:1px solid rgba(110,220,240,.14);background:linear-gradient(140deg,rgba(6,24,40,.74),rgba(8,38,62,.6));display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}
+.libraryCloudBar strong{display:block;font-size:.94rem}
+.libraryCloudBar p{margin-top:4px;color:var(--muted);font-size:.83rem}
+.cloud-inline-status{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:.8rem}
+.cloud-inline-status::before{content:'';width:8px;height:8px;border-radius:50%;background:rgba(255,185,85,.85);box-shadow:0 0 12px rgba(255,185,85,.28)}
+.cloud-inline-status.online::before{background:rgba(80,220,160,.9);box-shadow:0 0 12px rgba(80,220,160,.3)}
+.cloud-inline-status.sync::before{background:rgba(94,232,255,.92);box-shadow:0 0 12px rgba(94,232,255,.32)}
+.cloud-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(110,220,240,.16);font-size:.76rem;color:var(--muted)}
 .cloud-profile{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;background:rgba(6,22,38,.75);border:1px solid var(--line)}
 .cloud-avatar{width:46px;height:46px;border-radius:50%;border:2px solid rgba(80,200,255,.3);flex-shrink:0;object-fit:cover}
 .cloud-avatar-placeholder{width:46px;height:46px;border-radius:50%;border:2px solid rgba(80,200,255,.3);flex-shrink:0;background:var(--grad);display:grid;place-items:center;font-family:'Syne',sans-serif;font-size:1.1rem;color:#031820;font-weight:800}
@@ -763,12 +777,24 @@ select option{background:#041420;color:var(--text)}
         <div class="heroActions">
           <button class="btn primary" id="startBtn" style="padding:12px 22px;font-size:.96rem">▶ Слушать</button>
           <button class="btn" id="openLibBtn" style="padding:12px 18px;font-size:.96rem">Медиатека</button>
+          <button class="google-btn primary-connect" id="heroGoogleBtn">Войти через Google</button>
           <button class="btn" id="openSetBtn" style="padding:12px 18px;font-size:.96rem">Настройки</button>
         </div>
         <div class="heroStats">
           <div class="statCard"><strong id="hTracks">0</strong><span>треков</span></div>
           <div class="statCard"><strong id="hFavs">0</strong><span>избранных</span></div>
           <div class="statCard"><strong id="hRecent">0</strong><span>недавних</span></div>
+        </div>
+        <div class="cloudHeroBand">
+          <div>
+            <span class="cloud-pill">Google Drive Sync</span>
+            <strong id="cloudHeroTitle">Подключите Google-аккаунт</strong>
+            <p id="cloudHeroText">После входа DELTA сможет сохранять метаданные и ваши локальные треки в Google Drive. Client ID вы подключите сами, а интерфейс уже готов.</p>
+          </div>
+          <div class="cloudHeroActions">
+            <button class="btn" id="cloudHubBtn">Открыть облако</button>
+            <span class="cloud-inline-status" id="cloudInlineStatus">Ожидает настройки</span>
+          </div>
         </div>
       </div>
       <div class="heroVisual">
@@ -975,6 +1001,16 @@ select option{background:#041420;color:var(--text)}
       </div>
     </div>
     <div class="libraryGrid" id="libraryGrid"></div>
+    <div class="libraryCloudBar">
+      <div>
+        <strong>Сохраняйте треки в Google-аккаунте</strong>
+        <p>После входа новые локальные песни смогут автоматически синхронизироваться в ваш Drive.</p>
+      </div>
+      <div class="cloudHeroActions">
+        <button class="google-btn" id="libraryGoogleBtn">Войти через Google</button>
+        <button class="btn" id="libraryCloudOpenBtn">Открыть облако</button>
+      </div>
+    </div>
   </section>
 </div>
 
@@ -1185,6 +1221,7 @@ const el={
   searchInput:$('searchInput'),trackCount:$('trackCount'),storageInfo:$('storageInfo'),
   quickStartBtn:$('quickStartBtn'),addBtn:$('addBtn'),
   startBtn:$('startBtn'),openLibBtn:$('openLibBtn'),openSetBtn:$('openSetBtn'),
+  heroGoogleBtn:$('heroGoogleBtn'),cloudHubBtn:$('cloudHubBtn'),cloudHeroTitle:$('cloudHeroTitle'),cloudHeroText:$('cloudHeroText'),cloudInlineStatus:$('cloudInlineStatus'),
   hTracks:$('hTracks'),hFavs:$('hFavs'),hRecent:$('hRecent'),
   cover:$('cover'),trackTitle:$('trackTitle'),trackArtist:$('trackArtist'),trackDesc:$('trackDesc'),
   playPill:$('playPill'),repeatPill:$('repeatPill'),shufflePill:$('shufflePill'),speedPill:$('speedPill'),
@@ -1193,7 +1230,7 @@ const el={
   speedBtn:$('speedBtn'),speedPopup:$('speedPopup'),
   volInput:$('volInput'),favCurBtn:$('favCurBtn'),
   playlistList:$('playlistList'),plCount:$('plCount'),queueList:$('queueList'),playFirstBtn:$('playFirstBtn'),
-  fileInput:$('fileInput'),fileInput2:$('fileInput2'),clearLibBtn:$('clearLibBtn'),
+  fileInput:$('fileInput'),fileInput2:$('fileInput2'),clearLibBtn:$('clearLibBtn'),libraryGoogleBtn:$('libraryGoogleBtn'),libraryCloudOpenBtn:$('libraryCloudOpenBtn'),
   libraryGrid:$('libraryGrid'),
   favoritesList:$('favoritesList'),recentList:$('recentList'),
   settingsList:$('settingsList'),
@@ -1335,6 +1372,10 @@ function bindEvents(){
   el.startBtn.onclick=()=>switchTab(ST.tracks.length?'player':'library');
   el.openLibBtn.onclick=()=>switchTab('library');
   el.openSetBtn.onclick=()=>switchTab('settings');
+  el.heroGoogleBtn.onclick=()=>openGoogleConnect();
+  el.cloudHubBtn.onclick=()=>switchTab('cloud');
+  el.libraryGoogleBtn.onclick=()=>openGoogleConnect();
+  el.libraryCloudOpenBtn.onclick=()=>switchTab('cloud');
   // Files
   el.fileInput.onchange=e=>handleFiles(e.target.files);
   el.fileInput2.onchange=e=>handleFiles(e.target.files);
@@ -1575,12 +1616,49 @@ function resizeCanvases(){
 // ── RENDER ALL ─────────────────────────────────
 function renderAll(){
   rebuildQueue();
-  renderHome();renderHero();renderTransport();renderProgress();
+  renderHome();renderCloudCTA();renderHero();renderTransport();renderProgress();
   renderPlaylist();renderQueue();renderLib();
   renderFavs();renderRecent();renderSoundLab();renderFocus();
   renderSettings();renderMeta();
 }
 function renderHome(){el.hTracks.textContent=ST.tracks.length;el.hFavs.textContent=ST.tracks.filter(t=>t.favorite).length;el.hRecent.textContent=ST.recent.length}
+function renderCloudCTA(){
+  if(!el.cloudHeroTitle||!el.cloudHeroText||!el.cloudInlineStatus)return;
+  const hasClient=!!CLOUD.clientId;
+  const isLogged=!!(CLOUD.token&&CLOUD.tokenExpiry>Date.now());
+  const isSyncing=!!CLOUD.syncing;
+  el.cloudInlineStatus.className=`cloud-inline-status${isSyncing?' sync':isLogged?' online':''}`;
+  if(isSyncing){
+    el.cloudInlineStatus.textContent='Идёт синхронизация';
+    el.cloudHeroTitle.textContent='Облако синхронизирует треки';
+    el.cloudHeroText.textContent='DELTA обновляет метаданные и аудиофайлы в вашем Google Drive.';
+    if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Обновить облако';
+    if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Синхронизировать';
+    return;
+  }
+  if(isLogged){
+    const name=CLOUD.user?.name||'Google';
+    el.cloudInlineStatus.textContent='Подключено';
+    el.cloudHeroTitle.textContent=`Аккаунт ${name} подключён`;
+    el.cloudHeroText.textContent='Новые локальные треки можно сохранять в Google Drive и восстанавливать на других устройствах через вкладку "Облако".';
+    if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Открыть Google Drive Sync';
+    if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Открыть синхронизацию';
+    return;
+  }
+  if(hasClient){
+    el.cloudInlineStatus.textContent='Готово ко входу';
+    el.cloudHeroTitle.textContent='Можно войти через Google';
+    el.cloudHeroText.textContent='Client ID уже указан. Осталось авторизоваться, чтобы привязать песни к вашему аккаунту и включить синхронизацию.';
+    if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Войти через Google';
+    if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Войти через Google';
+    return;
+  }
+  el.cloudInlineStatus.textContent='Ожидает настройки';
+  el.cloudHeroTitle.textContent='Подключите Google-аккаунт';
+  el.cloudHeroText.textContent='После входа DELTA сможет сохранять метаданные и ваши локальные треки в Google Drive. Client ID вы подключите сами, а интерфейс уже готов.';
+  if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Настроить Google Sync';
+  if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Подключить Google';
+}
 function renderHero(){
   const t=curTrack();
   if(!t){el.trackTitle.textContent='Тишина на глубине';el.trackArtist.textContent='Загрузите или перетащите аудиофайлы';el.trackDesc.textContent='DELTA поддерживает очередь, поиск, избранное, 5-полосный EQ и морской визуализатор.';return}
@@ -2089,6 +2167,28 @@ function saveCloudMeta(){
   localStorage.setItem('delta-cloudmeta', JSON.stringify(CLOUD.cloudMeta));
 }
 
+function openGoogleConnect(){
+  switchTab('cloud');
+  const hasClient=!!CLOUD.clientId;
+  const isLogged=!!(CLOUD.token&&CLOUD.tokenExpiry>Date.now());
+  if(!hasClient){
+    setTimeout(()=>{
+      const input=document.getElementById('clientIdInput');
+      input?.focus();
+      input?.scrollIntoView({behavior:'smooth',block:'center'});
+    },220);
+    return;
+  }
+  if(isLogged){
+    setTimeout(()=>document.getElementById('syncNowBtn')?.focus(),220);
+    return;
+  }
+  setTimeout(()=>{
+    renderGoogleBtn(true);
+    document.querySelector('#googleSignInBtn .google-btn')?.focus();
+  },220);
+}
+
 // ── Bind events ───────────────────────────────
 function bindCloudEvents(){
   document.getElementById('saveClientIdBtn')?.addEventListener('click', ()=>{
@@ -2126,12 +2226,18 @@ function renderCloudUI(){
   if(!CLOUD.clientId){
     setup.style.display='';auth.style.display='none';logged.style.display='none';
     badge.textContent='Настройка';
+    badge.style.borderColor='';
+    badge.style.color='';
+    renderCloudCTA();
     return;
   }
   if(!CLOUD.token || CLOUD.tokenExpiry < Date.now()){
     setup.style.display='none';auth.style.display='';logged.style.display='none';
     badge.textContent='Не авторизован';
+    badge.style.borderColor='';
+    badge.style.color='';
     renderGoogleBtn();
+    renderCloudCTA();
     return;
   }
   setup.style.display='none';auth.style.display='none';logged.style.display='';
@@ -2146,20 +2252,25 @@ function renderCloudUI(){
     if(emailEl)emailEl.textContent = CLOUD.user.email||'';
     if(avatarEl){
       if(CLOUD.user.picture){
-        const img = document.createElement('img');
-        img.src=CLOUD.user.picture;img.className='cloud-avatar';
-        avatarEl.replaceWith(img);
+        avatarEl.className='cloud-avatar';
+        avatarEl.textContent='';
+        avatarEl.style.backgroundImage=`url("${CLOUD.user.picture}")`;
+        avatarEl.style.backgroundSize='cover';
+        avatarEl.style.backgroundPosition='center';
       } else {
+        avatarEl.className='cloud-avatar-placeholder';
+        avatarEl.style.backgroundImage='';
         avatarEl.textContent=(CLOUD.user.name||'?')[0].toUpperCase();
       }
     }
   }
   renderCloudTracks();
   renderCloudStats();
+  renderCloudCTA();
 }
 
 // ── Google Sign-In button ──────────────────────
-function renderGoogleBtn(){
+function renderGoogleBtn(autoStart=false){
   if(!CLOUD.clientId)return;
   const container = document.getElementById('googleSignInBtn');
   if(!container)return;
@@ -2173,9 +2284,10 @@ function renderGoogleBtn(){
     btn.innerHTML=`<svg class="google-icon" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Войти через Google`;
     btn.onclick = startGoogleOAuth;
     container.appendChild(btn);
+    if(autoStart)setTimeout(()=>btn.click(),80);
   } else {
     // GIS not loaded yet, retry
-    setTimeout(renderGoogleBtn, 800);
+    setTimeout(()=>renderGoogleBtn(autoStart), 800);
   }
 }
 
@@ -2206,7 +2318,7 @@ function startGoogleOAuth(){
       renderCloudUI();
     }
   });
-  client.requestAccessToken({prompt:''});
+  client.requestAccessToken({prompt:CLOUD.token ? '' : 'consent'});
 }
 
 async function fetchUserProfile(){
@@ -2228,6 +2340,7 @@ function cloudSignOut(){
   localStorage.removeItem('delta-gexpiry');
   localStorage.removeItem('delta-guser');
   renderCloudUI();
+  renderCloudCTA();
   // Reset badge
   const badge=document.getElementById('cloudStatusBadge');
   if(badge){badge.textContent='Не подключено';badge.style.borderColor='';badge.style.color='';}
@@ -2543,6 +2656,7 @@ function showSyncStatus(type, text){
   if(!el||!tel)return;
   el.className='sync-status '+type;
   tel.textContent=text;
+  renderCloudCTA();
 }
 
 // ── Auto-sync after upload ────────────────────

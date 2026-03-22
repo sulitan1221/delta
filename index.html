@@ -14,6 +14,7 @@
   --text:#eaf8ff;--muted:#8abfce;--soft:#4e7a8a;
   --line:rgba(110,220,240,.14);--line2:rgba(110,220,240,.3);
   --card:.64;--motion:1;
+  --glass-blur:26px;--glass-sat:1.3;--glass-btn-blur:10px;
   --shadow:0 28px 80px rgba(0,6,18,.52);
   --r:22px;
   /* glass button system */
@@ -127,8 +128,8 @@ body::after{
     rgba(6,24,44,calc(var(--card)-.03)) 100%);
   border:1px solid var(--line);
   border-radius:var(--r);
-  backdrop-filter:blur(26px) saturate(1.3);
-  -webkit-backdrop-filter:blur(26px) saturate(1.3);
+  backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
   box-shadow:
     inset 0 1px 0 rgba(100,210,255,.1),
     inset 0 -1px 0 rgba(0,20,50,.25),
@@ -161,8 +162,8 @@ body::after{
   color:var(--btn-c);
   font-size:.88rem;font-weight:600;
   box-shadow:var(--btn-hi);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(var(--glass-btn-blur));
+  -webkit-backdrop-filter:blur(var(--glass-btn-blur));
   transition:all .2s ease;
   position:relative;overflow:hidden;
   white-space:nowrap;cursor:pointer;
@@ -222,6 +223,21 @@ body::after{
 .topStatusPill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(5,22,38,.66);border:1px solid var(--line);color:var(--muted);font-size:.78rem;backdrop-filter:blur(14px)}
 .topStatusPill::before{content:'';width:8px;height:8px;border-radius:50%;background:rgba(255,190,100,.85);box-shadow:0 0 12px rgba(255,190,100,.22)}
 .topStatusPill.online::before{background:rgba(90,220,170,.92);box-shadow:0 0 14px rgba(90,220,170,.24)}
+.googleAccountPill{
+  display:none;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;
+  background:linear-gradient(135deg,rgba(8,28,48,.88),rgba(8,38,64,.62));
+  border:1px solid rgba(110,220,240,.16);color:var(--text);min-width:0;max-width:280px
+}
+.googleAccountPill.show{display:inline-flex}
+.googleAccountAvatar{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  background:var(--grad);border:1px solid rgba(140,230,255,.2);color:#031820;font-weight:800;font-family:'Syne',sans-serif;
+  object-fit:cover
+}
+.googleAccountMeta{min-width:0}
+.googleAccountMeta strong,.googleAccountMeta span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.googleAccountMeta strong{font-size:.82rem}
+.googleAccountMeta span{font-size:.72rem;color:var(--muted)}
 .topGoogleBtn{padding:10px 18px;border-radius:14px;position:relative;overflow:hidden}
 .topGoogleBtn::after{
   content:'';position:absolute;top:-20%;bottom:-20%;width:36%;left:0;pointer-events:none;
@@ -414,12 +430,31 @@ body::after{
 
 /* ── SETTINGS ────────────────────────────────────── */
 /* z-index critical fix */
-.settingsList{display:grid;gap:12px;position:relative;z-index:10}
-.setCard{padding:16px;border-radius:18px;background:rgba(6,22,38,.74);border:1px solid var(--line);position:relative;z-index:10}
-.setHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;flex-wrap:wrap}
-.setHead strong{font-size:.92rem}
-.setHead em{font-style:normal;color:var(--muted);font-size:.78rem}
-.setBody{color:var(--soft);font-size:.82rem;line-height:1.52;margin-bottom:10px}
+.settingsList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;position:relative;z-index:10}
+.setCard{
+  padding:18px;border-radius:22px;background:
+    linear-gradient(165deg,rgba(7,28,46,.88),rgba(4,16,30,.7));
+  border:1px solid rgba(110,220,240,.14);position:relative;z-index:10;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(150,235,255,.08),0 18px 38px rgba(0,10,24,.18)
+}
+.setCard::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 100% 0,rgba(80,210,255,.14),transparent 34%),
+    linear-gradient(135deg,rgba(130,230,255,.06),transparent 38%,transparent 68%,rgba(80,170,255,.05));
+}
+.setHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;flex-wrap:wrap;position:relative;z-index:1}
+.setTitleWrap{display:flex;align-items:flex-start;gap:12px}
+.setIcon{
+  width:40px;height:40px;border-radius:14px;display:grid;place-items:center;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(90,220,255,.2),rgba(70,150,255,.08));border:1px solid rgba(130,230,255,.14)
+}
+.setHead strong{font-size:.95rem}
+.setHead em{
+  font-style:normal;color:#dffbff;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(110,220,240,.12)
+}
+.setBody{color:var(--soft);font-size:.83rem;line-height:1.58;margin-bottom:12px;position:relative;z-index:1}
 .setRow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .setLabel{font-size:.86rem;color:var(--muted);flex:1;min-width:0}
 select{min-height:38px;padding:0 10px;color:var(--text);background:rgba(4,16,30,.94);border:1px solid rgba(80,180,220,.22);border-radius:12px;outline:none;cursor:pointer;position:relative;z-index:11}
@@ -428,6 +463,15 @@ select option{background:#041420;color:var(--text)}
 .toggle::after{content:'';position:absolute;pointer-events:none;width:20px;height:20px;border-radius:50%;top:3px;left:3px;background:#ddf;box-shadow:0 1px 4px rgba(0,0,0,.4);transition:.22s}
 .toggle.active{background:rgba(18,120,160,.5);border-color:rgba(80,210,255,.4)}
 .toggle.active::after{transform:translateX(23px);background:#90f0ff;box-shadow:0 0 10px rgba(80,200,255,.45)}
+.setHint{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(110,220,240,.1);font-size:.76rem;color:var(--muted)}
+.setHint.good{color:#dffbff;border-color:rgba(90,220,170,.16);background:rgba(12,58,46,.22)}
+.setHint.warn{color:#ffe6b6;border-color:rgba(255,190,100,.18);background:rgba(64,40,10,.25)}
+
+body.optimize-mode::before,body.optimize-mode::after,.optimize-mode .oceanCaustics,.optimize-mode .oceanGlow{animation:none!important;opacity:.5}
+.optimize-mode .glass{box-shadow:inset 0 1px 0 rgba(100,210,255,.08),0 18px 44px rgba(0,6,18,.3)}
+.optimize-mode .heroDisc,.optimize-mode .heroDisc::after,.optimize-mode .cover::before,.optimize-mode .cover.playing::after,.optimize-mode .topGoogleBtn::after{animation:none!important}
+.optimize-mode .visualizer::before{display:none}
+.optimize-mode .trackItem:hover,.optimize-mode .miniItem:hover,.optimize-mode .libCard:hover,.optimize-mode .soundCard:hover,.optimize-mode .focusCard:hover{transform:none}
 
 /* ── SOUND LAB ───────────────────────────────────── */
 .soundGrid{display:grid;gap:14px}
@@ -751,6 +795,7 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
   .playerMetaBar{grid-template-columns:repeat(2,minmax(0,1fr))}
   .heroStats{grid-template-columns:repeat(3,1fr)}
   .trackItem{grid-template-columns:40px 1fr auto 34px}
+  .settingsList{grid-template-columns:1fr}
   .setRow{flex-direction:column;align-items:flex-start}
   .setRow select,.setRow .rangeInput{width:100%;max-width:none}
   #volInput{width:80px}
@@ -922,6 +967,13 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
     <section class="glass" style="padding:18px 22px">
       <div class="topUtilityRow" style="margin-bottom:12px">
         <span class="topStatusPill" id="topCloudStatus">Google Sync</span>
+        <div class="googleAccountPill" id="googleAccountPill">
+          <div class="googleAccountAvatar" id="googleAccountAvatar">G</div>
+          <div class="googleAccountMeta">
+            <strong id="googleAccountName">Google Account</strong>
+            <span id="googleAccountEmail">Не авторизован</span>
+          </div>
+        </div>
         <button class="google-btn topGoogleBtn" id="topGoogleBtn">Войти через Google</button>
       </div>
       <div class="searchWrap">
@@ -1386,6 +1438,7 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
 const SK='delta-v5';
 const MAX_R=14;
 const SPEEDS=[0.5,0.75,1,1.25,1.5,2];
+const DEFAULT_GOOGLE_CLIENT_ID='1063106381116-gb445u39i9qcp7trspo6qkfm280hc335.apps.googleusercontent.com';
 
 const audio=new Audio();
 audio.preload='metadata';
@@ -1397,10 +1450,17 @@ const ST={
   activeTab:'home',objUrl:null,
   qualityMode:'original', // economy | original | maximum
   settings:{
-    theme:'ocean',motion:1,opacity:.64,autoplay:false,focusMode:false,
+    theme:'ocean',motion:1,opacity:.64,autoplay:false,focusMode:false,optimizationMode:false,cloudAutoRestore:true,
     spatialAudio:false,spatialDepth:45,
     eqSub:0,eqLow:0,eqMid:0,eqPres:0,eqHigh:0
   }
+};
+
+const AUTH={
+  clientId: localStorage.getItem('delta-google-auth-client')||DEFAULT_GOOGLE_CLIENT_ID,
+  token: localStorage.getItem('delta-google-auth-token')||'',
+  tokenExpiry:+localStorage.getItem('delta-google-auth-expiry')||0,
+  user:(()=>{try{return JSON.parse(localStorage.getItem('delta-google-auth-user')||'null')}catch(_){return null}})()
 };
 
 const PRESETS={
@@ -1417,13 +1477,15 @@ const PRESETS={
 };
 
 const SCHEMA=[
-  {type:'select',key:'theme',label:'Цветовая тема',desc:'Акцент визуализатора и кнопок.',opts:[{v:'ocean',l:'Океан'},{v:'emerald',l:'Изумруд'},{v:'night',l:'Ночное погружение'},{v:'purple',l:'Фиолет'}]},
-  {type:'range',key:'motion',label:'Скорость анимаций',desc:'Интенсивность фоновых эффектов.',min:.3,max:1.5,step:.1,fmt:v=>`${Math.round(v*100)}%`},
-  {type:'range',key:'opacity',label:'Прозрачность панелей',desc:'Степень стеклянности карточек.',min:.38,max:.9,step:.02,fmt:v=>`${Math.round(v*100)}%`},
-  {type:'select',key:'vizStyle',label:'Стиль визуализатора',desc:'Форма аудиовизуализации.',opts:[{v:'wave',l:'Водные линии'},{v:'bars',l:'Световые столбы'},{v:'line',l:'Эхолокация'}],isViz:true},
-  {type:'toggle',key:'autoplay',label:'Автозапуск',desc:'Восстанавливать воспроизведение после перезагрузки.'},
-  {type:'toggle',key:'focusMode',label:'Фокус-режим',desc:'Оставляет только главное при прослушивании.'},
-  {type:'action',label:'Сброс DELTA',desc:'Очищает все данные и настройки.',action:'reset'}
+  {type:'select',key:'theme',label:'Цветовая тема',desc:'Акцент визуализатора и кнопок.',icon:'◌',hint:'Визуальный стиль',opts:[{v:'ocean',l:'Океан'},{v:'emerald',l:'Изумруд'},{v:'night',l:'Ночное погружение'},{v:'purple',l:'Фиолет'}]},
+  {type:'range',key:'motion',label:'Скорость анимаций',desc:'Интенсивность фоновых эффектов и живых переливов интерфейса.',icon:'≈',hint:'Динамика',min:.3,max:1.5,step:.1,fmt:v=>`${Math.round(v*100)}%`},
+  {type:'range',key:'opacity',label:'Прозрачность панелей',desc:'Степень стеклянности карточек и глубина интерфейса.',icon:'◫',hint:'Стекло',min:.38,max:.9,step:.02,fmt:v=>`${Math.round(v*100)}%`},
+  {type:'select',key:'vizStyle',label:'Стиль визуализатора',desc:'Форма аудиовизуализации в плеере.',icon:'⌁',hint:'Визуал',opts:[{v:'wave',l:'Водные линии'},{v:'bars',l:'Световые столбы'},{v:'line',l:'Эхолокация'}],isViz:true},
+  {type:'toggle',key:'autoplay',label:'Автозапуск',desc:'Восстанавливать воспроизведение после перезагрузки.',icon:'▶',hint:'Сценарий запуска'},
+  {type:'toggle',key:'focusMode',label:'Фокус-режим',desc:'Оставляет только главное при прослушивании.',icon:'◎',hint:'Минимализм'},
+  {type:'toggle',key:'optimizationMode',label:'Режим оптимизации',desc:'Снижает тяжёлые анимации, blur и принудительно переводит визуализацию в экономичный режим.',icon:'⚡',hint:'Производительность'},
+  {type:'toggle',key:'cloudAutoRestore',label:'Автовосстановление из облака',desc:'После входа в Google Drive автоматически загружать недостающие треки.',icon:'☁',hint:'Резерв и восстановление'},
+  {type:'action',label:'Сброс DELTA',desc:'Очищает все данные и настройки.',icon:'✕',hint:'Опасная зона',action:'reset'}
 ];
 
 // ── element shortcuts ──────────────────────────
@@ -1434,6 +1496,7 @@ const el={
   quickStartBtn:$('quickStartBtn'),addBtn:$('addBtn'),
   startBtn:$('startBtn'),openLibBtn:$('openLibBtn'),openSetBtn:$('openSetBtn'),
   topGoogleBtn:$('topGoogleBtn'),topCloudStatus:$('topCloudStatus'),
+  googleAccountPill:$('googleAccountPill'),googleAccountAvatar:$('googleAccountAvatar'),googleAccountName:$('googleAccountName'),googleAccountEmail:$('googleAccountEmail'),
   heroGoogleBtn:$('heroGoogleBtn'),cloudHubBtn:$('cloudHubBtn'),cloudHeroTitle:$('cloudHeroTitle'),cloudHeroText:$('cloudHeroText'),cloudInlineStatus:$('cloudInlineStatus'),
   hTracks:$('hTracks'),hFavs:$('hFavs'),hRecent:$('hRecent'),
   cover:$('cover'),trackTitle:$('trackTitle'),trackArtist:$('trackArtist'),trackDesc:$('trackDesc'),
@@ -1553,6 +1616,7 @@ function goSlide(n){
 // ── INIT ───────────────────────────────────────
 function init(){
   loadState();
+  initGoogleAccount();
   initOnboard();
   applyTheme();
   bindEvents();
@@ -1618,10 +1682,15 @@ function applyTheme(){
   const r=document.documentElement;
   r.style.setProperty('--glow',g1);r.style.setProperty('--glow2',g2);r.style.setProperty('--glow3',g3);
   r.style.setProperty('--grad',`linear-gradient(135deg,${g1},${g2} 44%,${g3})`);
-  r.style.setProperty('--card',String(ST.settings.opacity));
-  r.style.setProperty('--motion',String(ST.settings.motion));
+  const optimized=!!ST.settings.optimizationMode;
+  r.style.setProperty('--card',String(optimized?Math.min(ST.settings.opacity,.58):ST.settings.opacity));
+  r.style.setProperty('--motion',String(optimized?Math.min(ST.settings.motion,.6):ST.settings.motion));
+  r.style.setProperty('--glass-blur',optimized?'14px':'26px');
+  r.style.setProperty('--glass-sat',optimized?'1.06':'1.3');
+  r.style.setProperty('--glass-btn-blur',optimized?'6px':'10px');
   document.body.dataset.theme=ST.settings.theme;
   document.body.classList.toggle('focus-mode',!!ST.settings.focusMode&&ST.activeTab==='player');
+  document.body.classList.toggle('optimize-mode',optimized);
 }
 
 // ── EVENTS ─────────────────────────────────────
@@ -1633,7 +1702,7 @@ function bindEvents(){
   el.startBtn.onclick=()=>switchTab(ST.tracks.length?'player':'library');
   el.openLibBtn.onclick=()=>switchTab('library');
   el.openSetBtn.onclick=()=>switchTab('settings');
-  if(el.topGoogleBtn)el.topGoogleBtn.onclick=()=>openGoogleConnect();
+  if(el.topGoogleBtn)el.topGoogleBtn.onclick=()=>toggleGoogleAccountAuth();
   if(el.heroGoogleBtn)el.heroGoogleBtn.onclick=()=>openGoogleConnect();
   if(el.cloudHubBtn)el.cloudHubBtn.onclick=()=>switchTab('cloud');
   if(el.libraryGoogleBtn)el.libraryGoogleBtn.onclick=()=>openGoogleConnect();
@@ -1884,7 +1953,7 @@ function resizeCanvases(){
 }
 
 function vizLabel(v){return({wave:'Водные линии',bars:'Световые столбы',line:'Эхолокация'})[v]||'Водные линии'}
-function qualityLabel(v){return QUALITY_CONFIGS[v]?.label||'Исходный'}
+function qualityLabel(v){return QUALITY_CONFIGS[ST.settings.optimizationMode?'economy':v]?.label||'Исходный'}
 function sceneLabel(){
   if(ST.settings.theme==='night')return 'Night Dive';
   if(ST.settings.spatialAudio&&ST.settings.spatialDepth>62)return 'Deep Current';
@@ -1942,7 +2011,6 @@ function renderCloudCTA(){
     el.cloudHeroTitle.textContent='Облако синхронизирует треки';
     el.cloudHeroText.textContent='DELTA обновляет метаданные и аудиофайлы в вашем Google Drive.';
     if(el.topCloudStatus)el.topCloudStatus.textContent='Синхронизация активна';
-    if(el.topGoogleBtn)el.topGoogleBtn.textContent='Открыть облако';
     if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Обновить облако';
     if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Синхронизировать';
     return;
@@ -1953,7 +2021,6 @@ function renderCloudCTA(){
     el.cloudHeroTitle.textContent=`Аккаунт ${name} подключён`;
     el.cloudHeroText.textContent='Новые локальные треки можно сохранять в Google Drive и восстанавливать на других устройствах через вкладку "Облако".';
     if(el.topCloudStatus)el.topCloudStatus.textContent=`Подключён: ${name}`;
-    if(el.topGoogleBtn)el.topGoogleBtn.textContent='Google подключён';
     if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Открыть Google Drive Sync';
     if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Открыть синхронизацию';
     return;
@@ -1963,7 +2030,6 @@ function renderCloudCTA(){
     el.cloudHeroTitle.textContent='Можно войти через Google';
     el.cloudHeroText.textContent='Client ID уже указан. Осталось авторизоваться, чтобы привязать песни к вашему аккаунту и включить синхронизацию.';
     if(el.topCloudStatus)el.topCloudStatus.textContent='Можно войти в Google';
-    if(el.topGoogleBtn)el.topGoogleBtn.textContent='Войти через Google';
     if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Войти через Google';
     if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Войти через Google';
     return;
@@ -1972,7 +2038,6 @@ function renderCloudCTA(){
   el.cloudHeroTitle.textContent='Подключите Google-аккаунт';
   el.cloudHeroText.textContent='После входа DELTA сможет сохранять метаданные и ваши локальные треки в Google Drive. Client ID вы подключите сами, а интерфейс уже готов.';
   if(el.topCloudStatus)el.topCloudStatus.textContent='Google Sync не настроен';
-  if(el.topGoogleBtn)el.topGoogleBtn.textContent='Подключить Google';
   if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Настроить Google Sync';
   if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Подключить Google';
 }
@@ -2081,15 +2146,141 @@ function renderFocus(){
   if(el.metaQuality)el.metaQuality.textContent=qualityLabel(ST.qualityMode);
   if(el.metaCloud)el.metaCloud.textContent=cloudReady?.token?(cloudReady.syncing?'Синхронизация':'Google Drive'):t?.file instanceof File?'Локально':'Офлайн';
 }
+function initGoogleAccount(){
+  if(AUTH.token && AUTH.tokenExpiry <= Date.now()+60000){
+    googleAccountSignOut({silent:true});
+  }else{
+    renderGoogleAccountUI();
+  }
+}
+function isGoogleAccountLoggedIn(){
+  return !!(AUTH.token && AUTH.tokenExpiry > Date.now()+60000 && AUTH.user);
+}
+function saveGoogleAccount(){
+  localStorage.setItem('delta-google-auth-client', AUTH.clientId||DEFAULT_GOOGLE_CLIENT_ID);
+  localStorage.setItem('delta-google-auth-token', AUTH.token||'');
+  localStorage.setItem('delta-google-auth-expiry', String(AUTH.tokenExpiry||0));
+  localStorage.setItem('delta-google-auth-user', JSON.stringify(AUTH.user||null));
+}
+function renderGoogleAccountUI(){
+  const logged=isGoogleAccountLoggedIn();
+  if(el.googleAccountPill){
+    el.googleAccountPill.classList.toggle('show',logged);
+  }
+  if(el.googleAccountName)el.googleAccountName.textContent=logged?(AUTH.user.name||'Google Account'):'Google Account';
+  if(el.googleAccountEmail)el.googleAccountEmail.textContent=logged?(AUTH.user.email||'Подключено'):'Не авторизован';
+  if(el.googleAccountAvatar){
+    if(logged && AUTH.user.picture){
+      el.googleAccountAvatar.innerHTML='';
+      el.googleAccountAvatar.style.background='transparent';
+      el.googleAccountAvatar.style.color='transparent';
+      el.googleAccountAvatar.src=AUTH.user.picture;
+      el.googleAccountAvatar.alt=AUTH.user.name||'Google user';
+      el.googleAccountAvatar.className='googleAccountAvatar';
+      if(el.googleAccountAvatar.tagName!=='IMG'){
+        const img=document.createElement('img');
+        img.id='googleAccountAvatar';
+        img.className='googleAccountAvatar';
+        img.alt=AUTH.user.name||'Google user';
+        img.src=AUTH.user.picture;
+        el.googleAccountAvatar.replaceWith(img);
+        el.googleAccountAvatar=img;
+      }
+    }else{
+      if(el.googleAccountAvatar.tagName==='IMG'){
+        const div=document.createElement('div');
+        div.id='googleAccountAvatar';
+        div.className='googleAccountAvatar';
+        div.textContent='G';
+        el.googleAccountAvatar.replaceWith(div);
+        el.googleAccountAvatar=div;
+      }
+      el.googleAccountAvatar.textContent=(AUTH.user?.name||'Google').trim().charAt(0).toUpperCase()||'G';
+    }
+  }
+  if(el.topGoogleBtn)el.topGoogleBtn.textContent=logged?'Выйти из Google':'Войти в Google';
+  if(el.storageInfo && logged)el.storageInfo.textContent=`Google Account: ${AUTH.user.name||AUTH.user.email||'подключён'}`;
+  if(el.settingsList && ST.activeTab==='settings')renderSettings();
+}
+async function fetchGoogleAccountProfile(token){
+  const res=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:`Bearer ${token}`}});
+  if(!res.ok)throw new Error('Не удалось получить профиль Google');
+  return res.json();
+}
+function toggleGoogleAccountAuth(){
+  if(isGoogleAccountLoggedIn()){googleAccountSignOut();return;}
+  startGoogleAccountAuth();
+}
+function startGoogleAccountAuth(){
+  if(!window.google?.accounts?.oauth2){
+    alert('Google API пока не загрузился. Проверьте интернет и попробуйте снова.');
+    return;
+  }
+  const client=google.accounts.oauth2.initTokenClient({
+    client_id: AUTH.clientId||DEFAULT_GOOGLE_CLIENT_ID,
+    scope:'openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+    callback: async tokenResponse=>{
+      if(tokenResponse.error){
+        alert(`Ошибка авторизации Google: ${tokenResponse.error}`);
+        return;
+      }
+      try{
+        AUTH.token=tokenResponse.access_token||'';
+        AUTH.tokenExpiry=Date.now()+((tokenResponse.expires_in||3600)*1000);
+        AUTH.user=await fetchGoogleAccountProfile(AUTH.token);
+        saveGoogleAccount();
+        renderGoogleAccountUI();
+      }catch(err){
+        console.warn('Google account auth failed',err);
+        alert('Не удалось получить профиль Google.');
+      }
+    }
+  });
+  client.requestAccessToken({prompt:AUTH.token?'':'consent'});
+}
+function googleAccountSignOut({silent=false}={}){
+  if(window.google?.accounts?.oauth2 && AUTH.token){
+    try{google.accounts.oauth2.revoke(AUTH.token,()=>{})}catch(_){}
+  }
+  AUTH.token='';AUTH.tokenExpiry=0;AUTH.user=null;
+  saveGoogleAccount();
+  renderGoogleAccountUI();
+  if(!silent)alert('Google аккаунт отключён.');
+}
+function renderGoogleAccountCard(){
+  const logged=isGoogleAccountLoggedIn();
+  const userName=AUTH.user?.name||'Google Account';
+  const userEmail=AUTH.user?.email||'Вход не выполнен';
+  const hint=logged
+    ? `<span class="setHint good">Подключён как ${esc(userName)}</span>`
+    : `<span class="setHint">Обычная авторизация профиля, отдельно от Google Drive</span>`;
+  return `<div class="setCard">
+    <div class="setHead">
+      <div class="setTitleWrap">
+        <div class="setIcon">G</div>
+        <div><strong>Google Account</strong><div class="setBody" style="margin:4px 0 0">Обычный вход в ваш Google-профиль без облачной синхронизации треков.</div></div>
+      </div>
+      <em>${logged?'Online':'Offline'}</em>
+    </div>
+    <div class="setRow">
+      <div class="setLabel" style="display:flex;flex-direction:column;gap:4px">
+        <span>${esc(userName)}</span>
+        <span style="font-size:.78rem;color:var(--soft)">${esc(userEmail)}</span>
+      </div>
+      <button class="google-btn" data-google-auth style="padding:10px 16px">${logged?'Выйти из Google':'Войти в Google'}</button>
+    </div>
+    <div style="margin-top:12px">${hint}</div>
+  </div>`;
+}
 function renderSettings(){
   if(!el.settingsList)return;
   try{
-    el.settingsList.innerHTML=SCHEMA.map(item=>{
-      if(item.type==='action')return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong></div><div class="setBody">${item.desc}</div><div class="setRow"><button class="btn danger" data-action="${item.action}">Сбросить всё</button></div></div>`;
-      if(item.type==='toggle'){const on=!!ST.settings[item.key];return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong><em>${on?'Вкл':'Выкл'}</em></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setLabel">${item.label}</span><button class="toggle${on?' active':''}" data-tog="${item.key}"></button></div></div>`}
-      if(item.type==='range'){const v=Number(ST.settings[item.key]??item.min??0);return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong><em>${item.fmt(v)}</em></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setLabel">${item.label}</span><input type="range" class="rangeInput" min="${item.min}" max="${item.max}" step="${item.step}" value="${v}" data-rng="${item.key}" style="width:130px"></div></div>`}
+    el.settingsList.innerHTML=renderGoogleAccountCard()+SCHEMA.map(item=>{
+      if(item.type==='action')return `<div class="setCard"><div class="setHead"><div class="setTitleWrap"><div class="setIcon">${item.icon||'✕'}</div><div><strong>${item.label}</strong></div></div><em>${item.hint||'Система'}</em></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setHint warn">${item.hint||'Требует подтверждения'}</span><button class="btn danger" data-action="${item.action}">Сбросить всё</button></div></div>`;
+      if(item.type==='toggle'){const on=!!ST.settings[item.key];return `<div class="setCard"><div class="setHead"><div class="setTitleWrap"><div class="setIcon">${item.icon||'•'}</div><div><strong>${item.label}</strong></div></div><em>${on?'Включено':'Выключено'}</em></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setHint${item.key==='optimizationMode'?(on?' good':' warn'):''}">${item.hint||item.label}</span><button class="toggle${on?' active':''}" data-tog="${item.key}"></button></div></div>`}
+      if(item.type==='range'){const v=Number(ST.settings[item.key]??item.min??0);return `<div class="setCard"><div class="setHead"><div class="setTitleWrap"><div class="setIcon">${item.icon||'•'}</div><div><strong>${item.label}</strong></div></div><em>${item.fmt(v)}</em></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setHint">${item.hint||item.label}</span><input type="range" class="rangeInput" min="${item.min}" max="${item.max}" step="${item.step}" value="${v}" data-rng="${item.key}" style="width:130px"></div></div>`}
       const v=item.isViz?ST.vizStyle:(ST.settings[item.key]??item.opts?.[0]?.v??'');
-      return `<div class="setCard"><div class="setHead"><strong>${item.label}</strong></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setLabel">${item.label}</span><select data-sel="${item.key}">${(item.opts||[]).map(o=>`<option value="${o.v}"${o.v===v?' selected':''}>${o.l}</option>`).join('')}</select></div></div>`;
+      return `<div class="setCard"><div class="setHead"><div class="setTitleWrap"><div class="setIcon">${item.icon||'•'}</div><div><strong>${item.label}</strong></div></div><em>${item.hint||'Параметр'}</em></div><div class="setBody">${item.desc}</div><div class="setRow"><span class="setHint">${item.hint||item.label}</span><select data-sel="${item.key}">${(item.opts||[]).map(o=>`<option value="${o.v}"${o.v===v?' selected':''}>${o.l}</option>`).join('')}</select></div></div>`;
     }).join('');
   }catch(err){
     console.warn('renderSettings failed', err);
@@ -2103,6 +2294,9 @@ function renderSettings(){
   });
   el.settingsList.querySelectorAll('[data-tog]').forEach(node=>{
     node.addEventListener('click',e=>{e.stopPropagation();const k=e.currentTarget.dataset.tog;ST.settings[k]=!ST.settings[k];applyTheme();saveState();renderSettings();renderTransport();updateMini()});
+  });
+  el.settingsList.querySelectorAll('[data-google-auth]').forEach(node=>{
+    node.addEventListener('click',e=>{e.stopPropagation();toggleGoogleAccountAuth()});
   });
   el.settingsList.querySelectorAll('[data-action]').forEach(node=>{
     node.addEventListener('click',e=>{e.stopPropagation();if(e.currentTarget.dataset.action==='reset'){if(confirm('Сбросить DELTA?')){localStorage.removeItem(SK);location.reload()}}});
@@ -2187,7 +2381,7 @@ function drawViz(){
   const g3=st.getPropertyValue('--glow3').trim()||'#8bbfff';
   vizCtx.fillStyle='rgba(3,11,20,.24)';vizCtx.fillRect(0,0,W,H);
   applyFx();
-  const playing=ST.playing?1:.22;const m=ST.settings.motion;
+  const playing=ST.playing?1:.22;const optimized=!!ST.settings.optimizationMode;const m=optimized?Math.min(ST.settings.motion,.58):ST.settings.motion;
   const grad=vizCtx.createLinearGradient(0,0,W,H);
   grad.addColorStop(0,g1);grad.addColorStop(.5,g2);grad.addColorStop(1,g3);
   if(analyser&&ST.playing){analyser.getByteFrequencyData(freqData);analyser.getByteTimeDomainData(waveData)}
@@ -2203,7 +2397,7 @@ function drawViz(){
       vizCtx.beginPath();vizCtx.moveTo(x+rr,y);vizCtx.lineTo(x+w-rr,y);vizCtx.quadraticCurveTo(x+w,y,x+w,y+rr);vizCtx.lineTo(x+w,H);vizCtx.lineTo(x,H);vizCtx.lineTo(x,y+rr);vizCtx.quadraticCurveTo(x,y,x+rr,y);vizCtx.closePath();vizCtx.fill();
     }
   }else if(ST.vizStyle==='line'){
-    const rings=4;
+    const rings=optimized?2:4;
     const pulse=analyser&&ST.playing?(freqData[18]||0)/255:(.25+Math.sin(performance.now()/900)*.12);
     for(let i=0;i<rings;i++){
       const rr=(Math.min(W,H)*.12)+(i*36)+(pulse*24);
@@ -2226,14 +2420,15 @@ function drawViz(){
     vizCtx.strokeStyle=grad;vizCtx.lineWidth=2.4;vizCtx.stroke();
   }else{
     const pts=[];
-    for(let i=0;i<160;i++){const r=i/159;let v;if(analyser&&ST.playing&&ST.vizStyle==='wave')v=(waveData[Math.floor(r*(waveData.length-1))]-128)/128;else v=Math.sin(performance.now()/(520/m)+i*.2)*.36;pts.push(v)}
+    const totalPts=optimized?96:160;
+    for(let i=0;i<totalPts;i++){const r=i/(totalPts-1);let v;if(analyser&&ST.playing&&ST.vizStyle==='wave')v=(waveData[Math.floor(r*(waveData.length-1))]-128)/128;else v=Math.sin(performance.now()/(520/m)+i*.2)*.36;pts.push(v)}
     vizCtx.beginPath();vizCtx.moveTo(0,H*.6);
-    pts.forEach((v,i)=>{const x=(i/159)*W,y=H*.52+v*H*(ST.vizStyle==='line'?.13:.22)*(.55+playing);vizCtx.lineTo(x,y)});
+    pts.forEach((v,i)=>{const x=(i/(pts.length-1))*W,y=H*.52+v*H*(ST.vizStyle==='line'?.13:.22)*(.55+playing);vizCtx.lineTo(x,y)});
     vizCtx.lineTo(W,H);vizCtx.lineTo(0,H);vizCtx.closePath();
-    vizCtx.globalAlpha=.18;vizCtx.fillStyle=grad;vizCtx.fill();
-    vizCtx.beginPath();pts.forEach((v,i)=>{const x=(i/159)*W,y=H*.52+v*H*(ST.vizStyle==='line'?.13:.22)*(.55+playing);i?vizCtx.lineTo(x,y):vizCtx.moveTo(x,y)});
+    vizCtx.globalAlpha=optimized?.12:.18;vizCtx.fillStyle=grad;vizCtx.fill();
+    vizCtx.beginPath();pts.forEach((v,i)=>{const x=(i/(pts.length-1))*W,y=H*.52+v*H*(ST.vizStyle==='line'?.13:.22)*(.55+playing);i?vizCtx.lineTo(x,y):vizCtx.moveTo(x,y)});
     vizCtx.globalAlpha=.9;vizCtx.lineWidth=ST.vizStyle==='line'?2:2.8;vizCtx.strokeStyle=grad;
-    vizCtx.shadowBlur=14;vizCtx.shadowColor=g1;vizCtx.stroke();vizCtx.shadowBlur=0;
+    vizCtx.shadowBlur=optimized?0:14;vizCtx.shadowColor=g1;vizCtx.stroke();vizCtx.shadowBlur=0;
   }
   vizCtx.globalAlpha=1;requestAnimationFrame(drawViz);
 }
@@ -2272,7 +2467,7 @@ function setQualityMode(mode){
   renderQualityUI();
   // Rebuild audio context with new FFT if it exists
   if(analyser){
-    const cfg=QUALITY_CONFIGS[mode]||QUALITY_CONFIGS.original;
+    const cfg=QUALITY_CONFIGS[getEffectiveQualityMode()]||QUALITY_CONFIGS.original;
     analyser.fftSize=cfg.fftSize;
     freqData=new Uint8Array(analyser.frequencyBinCount);
     waveData=new Uint8Array(analyser.fftSize);
@@ -2280,19 +2475,24 @@ function setQualityMode(mode){
 }
 
 function renderQualityUI(){
-  const mode=ST.qualityMode||'original';
+  const mode=getEffectiveQualityMode();
   el.qualityGrid.querySelectorAll('[data-q]').forEach(c=>{
     c.classList.toggle('active',c.dataset.q===mode);
   });
   const cfg=QUALITY_CONFIGS[mode]||QUALITY_CONFIGS.original;
-  el.qualityInfo.textContent=cfg.info;
+  el.qualityInfo.textContent=ST.settings.optimizationMode
+    ? `Режим оптимизации активен: сейчас используется экономичный профиль. ${cfg.info}`
+    : cfg.info;
 }
 
 function getQualityFFT(){
-  return(QUALITY_CONFIGS[ST.qualityMode]||QUALITY_CONFIGS.original).fftSize;
+  return(QUALITY_CONFIGS[getEffectiveQualityMode()]||QUALITY_CONFIGS.original).fftSize;
 }
 function getQualityVizBars(){
-  return(QUALITY_CONFIGS[ST.qualityMode]||QUALITY_CONFIGS.original).vizBars;
+  return(QUALITY_CONFIGS[getEffectiveQualityMode()]||QUALITY_CONFIGS.original).vizBars;
+}
+function getEffectiveQualityMode(){
+  return ST.settings.optimizationMode?'economy':(ST.qualityMode||'original');
 }
 
 // ── HTML EXPORT ──────────────────────────────────
@@ -2495,8 +2695,6 @@ init();
    OAuth 2.0 PKCE + Google Drive API v3
 ══════════════════════════════════════════════════ */
 
-const DEFAULT_GOOGLE_CLIENT_ID='1063106381116-gb445u39i9qcp7trspo6qkfm280hc335.apps.googleusercontent.com';
-
 const CLOUD={
   clientId: localStorage.getItem('delta-gclient')||DEFAULT_GOOGLE_CLIENT_ID,
   token: null,
@@ -2521,6 +2719,15 @@ function initCloud(){
   }
   renderCloudUI();
   bindCloudEvents();
+  if(CLOUD.token && CLOUD.tokenExpiry > Date.now()+60000){
+    setTimeout(async()=>{
+      try{
+        await syncMetaFromDrive();
+        if(ST.settings.cloudAutoRestore!==false)await restoreCloudTracksFromAccount({silent:true});
+        else renderAll();
+      }catch(e){console.warn('Cloud init restore failed',e)}
+    }, 400);
+  }
 }
 
 function saveCloudMeta(){
@@ -2680,6 +2887,9 @@ function startGoogleOAuth(){
       showSyncStatus('syncing','Авторизован! Загружаю метаданные…');
       renderCloudUI();
       await syncMetaFromDrive();
+      if(ST.settings.cloudAutoRestore!==false){
+        await restoreCloudTracksFromAccount({silent:false});
+      }
       showSyncStatus('done','Подключено к Google Drive ✓');
       renderCloudUI();
     }
@@ -2867,6 +3077,35 @@ async function downloadTrackFromDrive(track){
   if(idx>=0)ST.tracks[idx].file=file;
   saveState();
   return file;
+}
+
+async function restoreCloudTracksFromAccount({silent=false}={}){
+  if(!CLOUD.token)return;
+  const missing=ST.tracks.filter(t=>!hasPlayableFile(t)&&CLOUD.cloudMeta[t.id]);
+  if(!missing.length){
+    if(!silent)showSyncStatus('done','Все облачные треки уже восстановлены ✓');
+    renderAll();
+    return;
+  }
+  if(CLOUD.syncing)return;
+  CLOUD.syncing=true;
+  try{
+    if(!silent)showSyncStatus('syncing',`Восстановление ${missing.length} треков из Google Drive…`);
+    let done=0;
+    for(const t of missing){
+      try{
+        await downloadTrackFromDrive(t);
+        done++;
+      }catch(e){console.warn('Restore failed',t.title,e)}
+    }
+    renderAll();renderCloudTracks();renderCloudStats();
+    showSyncStatus('done',`Восстановлено ${done}/${missing.length} треков ✓`);
+  }catch(e){
+    console.warn('Cloud restore failed',e);
+    if(!silent)showSyncStatus('error','Не удалось восстановить треки из облака');
+  }finally{
+    CLOUD.syncing=false;
+  }
 }
 
 // ── Sync all ───────────────────────────────────

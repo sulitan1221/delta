@@ -1451,8 +1451,6 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
    декоративных ::before/::after, чёткие z-index
 ══════════════════════════════════════════════════ */
 // --- Блок IndexedDB для сохранения файлов ---
-const DB_NAME = "DeltaPlayerDB";
-const STORE_NAME = "TracksStore";
 
 function openDB() {
     return new Promise((resolve, reject) => {

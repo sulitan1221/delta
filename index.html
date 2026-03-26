@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DELTA · Морской Медиаплеер</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -354,6 +354,13 @@ body::after{
 .visualizer{height:128px;margin:20px 0 14px;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:rgba(3,12,22,.88);position:relative}
 .visualizer::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(150,230,255,.06),transparent 40%,rgba(12,42,68,.2));mix-blend-mode:screen}
 #vizCanvas{width:100%;height:100%;display:block}
+.vizModeRow{display:flex;gap:8px;flex-wrap:wrap;margin:-2px 0 14px}
+.vizModeBtn{
+  padding:8px 12px;border-radius:12px;background:rgba(6,24,44,.65);border:1px solid var(--line);
+  color:var(--muted);font-size:.8rem;font-weight:700;transition:.2s
+}
+.vizModeBtn:hover{background:rgba(8,38,68,.82);border-color:var(--line2);color:var(--text)}
+.vizModeBtn.active{background:rgba(12,56,104,.78);border-color:rgba(80,200,255,.42);color:var(--text);box-shadow:0 0 16px rgba(80,190,255,.16)}
 /* Progress */
 .progressBox{padding:14px 18px;border-radius:18px;background:rgba(4,16,30,.58);border:1px solid var(--line)}
 .timeRow{display:flex;gap:10px;align-items:center}
@@ -468,10 +475,12 @@ select option{background:#041420;color:var(--text)}
 .setHint.warn{color:#ffe6b6;border-color:rgba(255,190,100,.18);background:rgba(64,40,10,.25)}
 
 body.optimize-mode::before,body.optimize-mode::after,.optimize-mode .oceanCaustics,.optimize-mode .oceanGlow{animation:none!important;opacity:.5}
+.optimize-mode .oceanParticles{display:none}
 .optimize-mode .glass{box-shadow:inset 0 1px 0 rgba(100,210,255,.08),0 18px 44px rgba(0,6,18,.3)}
 .optimize-mode .heroDisc,.optimize-mode .heroDisc::after,.optimize-mode .cover::before,.optimize-mode .cover.playing::after,.optimize-mode .topGoogleBtn::after{animation:none!important}
 .optimize-mode .visualizer::before{display:none}
 .optimize-mode .trackItem:hover,.optimize-mode .miniItem:hover,.optimize-mode .libCard:hover,.optimize-mode .soundCard:hover,.optimize-mode .focusCard:hover{transform:none}
+.optimize-mode .glass::after,.optimize-mode .btn::before{display:none}
 
 /* ── SOUND LAB ───────────────────────────────────── */
 .soundGrid{display:grid;gap:14px}
@@ -966,7 +975,7 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
   <div class="topTools">
     <section class="glass" style="padding:18px 22px">
       <div class="topUtilityRow" style="margin-bottom:12px">
-        <span class="topStatusPill" id="topCloudStatus">Google Sync</span>
+        <span class="topStatusPill" id="topCloudStatus">Google Backup</span>
         <div class="googleAccountPill" id="googleAccountPill">
           <div class="googleAccountAvatar" id="googleAccountAvatar">G</div>
           <div class="googleAccountMeta">
@@ -998,7 +1007,6 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
           <button class="tabBtn" data-tab="player">Плеер</button>
           <button class="tabBtn" data-tab="sound">Студия звука</button>
           <button class="tabBtn" data-tab="library">Медиатека</button>
-          <button class="tabBtn" data-tab="cloud">☁ Облако</button>
           <button class="tabBtn" data-tab="favorites">Избранное</button>
           <button class="tabBtn" data-tab="recent">Недавние</button>
           <button class="tabBtn" data-tab="settings">Настройки</button>
@@ -1034,12 +1042,12 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
         </div>
         <div class="cloudHeroBand">
           <div>
-            <span class="cloud-pill">Google Drive Sync</span>
+            <span class="cloud-pill">Google Backup</span>
             <strong id="cloudHeroTitle">Подключите Google-аккаунт</strong>
-            <p id="cloudHeroText">После входа DELTA сможет сохранять метаданные и ваши локальные треки в Google Drive. Client ID вы подключите сами, а интерфейс уже готов.</p>
+            <p id="cloudHeroText">После входа DELTA будет тихо сохранять вашу библиотеку в аккаунт и восстанавливать песни при следующем заходе.</p>
           </div>
           <div class="cloudHeroActions">
-            <button class="btn" id="cloudHubBtn">Открыть облако</button>
+            <button class="btn" id="cloudHubBtn">Синхронизировать</button>
             <span class="cloud-inline-status" id="cloudInlineStatus">Ожидает настройки</span>
           </div>
         </div>
@@ -1081,9 +1089,16 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
         <div class="metaChip"><strong>Сцена</strong><span id="metaScene">Ocean</span></div>
         <div class="metaChip"><strong>Визуализация</strong><span id="metaViz">Водные линии</span></div>
         <div class="metaChip"><strong>Качество</strong><span id="metaQuality">Исходный</span></div>
-        <div class="metaChip"><strong>Облако</strong><span id="metaCloud">Локально</span></div>
+        <div class="metaChip"><strong>Аккаунт</strong><span id="metaCloud">Локально</span></div>
       </div>
       <div class="visualizer"><canvas id="vizCanvas" width="900" height="220"></canvas></div>
+      <div class="vizModeRow" id="vizModeRow">
+        <button class="vizModeBtn active" data-viz="wave">Волны</button>
+        <button class="vizModeBtn" data-viz="bars">Столбы</button>
+        <button class="vizModeBtn" data-viz="line">Эхолиния</button>
+        <button class="vizModeBtn" data-viz="pulse">Пульс</button>
+        <button class="vizModeBtn" data-viz="scope">Осциллограф</button>
+      </div>
       <div class="progressBox">
         <div class="timeRow">
           <span class="timeMark" id="curTime">0:00</span>
@@ -1128,7 +1143,7 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
         <div class="panelHeader">
           <div><h2>Плейлист</h2><p id="plCount">0 треков</p></div>
           <div class="panelActions">
-            <input class="uploadInput" type="file" id="fileInput" accept="audio/*" multiple>
+            <input class="uploadInput" type="file" id="fileInput" accept="audio/*,.html,.htm" multiple>
             <label for="fileInput" class="btn" style="cursor:pointer;padding:9px 14px;font-size:.84rem">＋ Загрузить</label>
             <button class="btn" id="playFirstBtn" style="padding:9px 14px;font-size:.84rem">Первый</button>
           </div>
@@ -1247,10 +1262,10 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
     <div class="panelHeader">
       <div><h2>Медиатека</h2><p>Загружайте аудио или HTML-архивы с треками</p></div>
       <div class="panelActions">
-        <input class="uploadInput" type="file" id="fileInput2" accept="audio/*" multiple>
+        <input class="uploadInput" type="file" id="fileInput2" accept="audio/*,.html,.htm" multiple>
         <label for="fileInput2" class="btn" style="cursor:pointer">＋ Аудио</label>
         <input class="uploadInput" type="file" id="htmlImportInput" accept=".html,.htm">
-        <label for="htmlImportInput" class="btn" style="cursor:pointer">📄 HTML-архив</label>
+        <label for="htmlImportInput" class="btn" style="cursor:pointer">📄 HTML / архив</label>
         <button class="btn" id="exportHtmlBtn" title="Сохранить треки в HTML-файл">⬇ Экспорт HTML</button>
         <button class="btn danger" id="clearLibBtn">Очистить</button>
       </div>
@@ -1258,12 +1273,12 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
     <div class="libraryGrid" id="libraryGrid"></div>
     <div class="libraryCloudBar">
       <div>
-        <strong>Сохраняйте треки в Google-аккаунте</strong>
-        <p>После входа новые локальные песни смогут автоматически синхронизироваться в ваш Drive.</p>
+        <strong>Сохраняйте библиотеку в Google-аккаунте</strong>
+        <p>После входа новые локальные песни будут автоматически сохраняться и восстанавливаться при повторном запуске.</p>
       </div>
       <div class="cloudHeroActions">
         <button class="google-btn" id="libraryGoogleBtn">Войти через Google</button>
-        <button class="btn" id="libraryCloudOpenBtn">Открыть облако</button>
+        <button class="btn" id="libraryCloudOpenBtn">Резерв сейчас</button>
       </div>
     </div>
   </section>
@@ -1308,7 +1323,7 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
             <div class="step-num">4</div>
             <div class="step-body">
               <strong>Создай OAuth Credentials</strong>
-              <span>«APIs & Services» → «Credentials» → «Create Credentials» → «OAuth Client ID» → тип «Web application»<br>В поле «Authorized JavaScript origins» добавь: <code style="color:var(--glow);font-size:.76rem">http://localhost</code> и текущий домен</span>
+              <span>«APIs & Services» → «Credentials» → «Create Credentials» → «OAuth Client ID» → тип «Web application»<br>В поле «Authorized JavaScript origins» добавь: <code style="color:var(--glow);font-size:.76rem">http://127.0.0.1:8734</code><br>В поле «Authorized redirect URIs» добавь: <code style="color:var(--glow);font-size:.76rem">http://127.0.0.1:8734/oauth_callback</code></span>
             </div>
           </div>
           <div class="setup-step">
@@ -1401,7 +1416,7 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
   <div class="dropInner">
     <span class="dropIcon">🌊</span>
     <div class="dropTitle">Бросьте музыку в DELTA</div>
-    <div class="dropText">Перетащите сюда аудиофайлы, и они мягко вольются в медиатеку, плейлист и облачную синхронизацию.</div>
+    <div class="dropText">Перетащите сюда аудио или HTML-документ с песней, и DELTA попробует импортировать его в медиатеку.</div>
   </div>
 </div>
 <input class="uploadInput" type="file" id="rebindFileInput" accept="audio/*">
@@ -1435,6 +1450,51 @@ body.focus-mode .playerMetaBar{grid-template-columns:repeat(3,minmax(0,1fr))}
    Ключевые правила: pointer-events:none на всех
    декоративных ::before/::after, чёткие z-index
 ══════════════════════════════════════════════════ */
+// --- Блок IndexedDB для сохранения файлов ---
+const DB_NAME = "DeltaPlayerDB";
+const STORE_NAME = "TracksStore";
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: "id" });
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+// Сохранение трека в базу
+async function saveTrackToDB(trackObj, file) {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    // Сохраняем объект трека вместе с самим файлом (Blob)
+    await store.put({ ...trackObj, file: file });
+}
+
+// Загрузка всех треков из базы при старте
+async function loadTracksFromDB() {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const store = tx.objectStore(STORE_NAME);
+    return new Promise((resolve) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+    });
+}
+
+// Удаление трека из базы
+async function deleteTrackFromDB(id) {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    await store.delete(id);
+}
 const SK='delta-v5';
 const MAX_R=14;
 const SPEEDS=[0.5,0.75,1,1.25,1.5,2];
@@ -1457,7 +1517,7 @@ const ST={
 };
 
 const AUTH={
-  clientId: localStorage.getItem('delta-google-auth-client')||DEFAULT_GOOGLE_CLIENT_ID,
+  clientId: localStorage.getItem('delta-gclient')||localStorage.getItem('delta-google-auth-client')||DEFAULT_GOOGLE_CLIENT_ID,
   token: localStorage.getItem('delta-google-auth-token')||'',
   tokenExpiry:+localStorage.getItem('delta-google-auth-expiry')||0,
   user:(()=>{try{return JSON.parse(localStorage.getItem('delta-google-auth-user')||'null')}catch(_){return null}})()
@@ -1480,7 +1540,7 @@ const SCHEMA=[
   {type:'select',key:'theme',label:'Цветовая тема',desc:'Акцент визуализатора и кнопок.',icon:'◌',hint:'Визуальный стиль',opts:[{v:'ocean',l:'Океан'},{v:'emerald',l:'Изумруд'},{v:'night',l:'Ночное погружение'},{v:'purple',l:'Фиолет'}]},
   {type:'range',key:'motion',label:'Скорость анимаций',desc:'Интенсивность фоновых эффектов и живых переливов интерфейса.',icon:'≈',hint:'Динамика',min:.3,max:1.5,step:.1,fmt:v=>`${Math.round(v*100)}%`},
   {type:'range',key:'opacity',label:'Прозрачность панелей',desc:'Степень стеклянности карточек и глубина интерфейса.',icon:'◫',hint:'Стекло',min:.38,max:.9,step:.02,fmt:v=>`${Math.round(v*100)}%`},
-  {type:'select',key:'vizStyle',label:'Стиль визуализатора',desc:'Форма аудиовизуализации в плеере.',icon:'⌁',hint:'Визуал',opts:[{v:'wave',l:'Водные линии'},{v:'bars',l:'Световые столбы'},{v:'line',l:'Эхолокация'}],isViz:true},
+  {type:'select',key:'vizStyle',label:'Стиль визуализатора',desc:'Форма аудиовизуализации в плеере.',icon:'⌁',hint:'Визуал',opts:[{v:'wave',l:'Водные линии'},{v:'bars',l:'Световые столбы'},{v:'line',l:'Эхолиния'},{v:'pulse',l:'Пульс'},{v:'scope',l:'Осциллограф'}],isViz:true},
   {type:'toggle',key:'autoplay',label:'Автозапуск',desc:'Восстанавливать воспроизведение после перезагрузки.',icon:'▶',hint:'Сценарий запуска'},
   {type:'toggle',key:'focusMode',label:'Фокус-режим',desc:'Оставляет только главное при прослушивании.',icon:'◎',hint:'Минимализм'},
   {type:'toggle',key:'optimizationMode',label:'Режим оптимизации',desc:'Снижает тяжёлые анимации, blur и принудительно переводит визуализацию в экономичный режим.',icon:'⚡',hint:'Производительность'},
@@ -1517,7 +1577,7 @@ const el={
   eqSub:$('eqSub'),eqLow:$('eqLow'),eqMid:$('eqMid'),eqPres:$('eqPres'),eqHigh:$('eqHigh'),
   eqSubVal:$('eqSubVal'),eqLowVal:$('eqLowVal'),eqMidVal:$('eqMidVal'),eqPresVal:$('eqPresVal'),eqHighVal:$('eqHighVal'),
   resetEqBtn:$('resetEqBtn'),presetRow:$('presetRow'),eqCurveCanvas:$('eqCurveCanvas'),
-  vizCanvas:$('vizCanvas'),
+  vizCanvas:$('vizCanvas'),vizModeRow:$('vizModeRow'),
   miniPlayer:$('miniPlayer'),miniTrackName:$('miniTrackName'),miniTrackArtist:$('miniTrackArtist'),
   miniPlay:$('miniPlay'),miniPrev:$('miniPrev'),miniNext:$('miniNext'),
   miniGoBtn:$('miniGoBtn'),miniProgFill:$('miniProgFill'),miniTime:$('miniTime'),
@@ -1683,11 +1743,11 @@ function applyTheme(){
   r.style.setProperty('--glow',g1);r.style.setProperty('--glow2',g2);r.style.setProperty('--glow3',g3);
   r.style.setProperty('--grad',`linear-gradient(135deg,${g1},${g2} 44%,${g3})`);
   const optimized=!!ST.settings.optimizationMode;
-  r.style.setProperty('--card',String(optimized?Math.min(ST.settings.opacity,.58):ST.settings.opacity));
-  r.style.setProperty('--motion',String(optimized?Math.min(ST.settings.motion,.6):ST.settings.motion));
-  r.style.setProperty('--glass-blur',optimized?'14px':'26px');
-  r.style.setProperty('--glass-sat',optimized?'1.06':'1.3');
-  r.style.setProperty('--glass-btn-blur',optimized?'6px':'10px');
+  r.style.setProperty('--card',String(optimized?Math.min(ST.settings.opacity,.48):ST.settings.opacity));
+  r.style.setProperty('--motion',String(optimized?Math.min(ST.settings.motion,.35):ST.settings.motion));
+  r.style.setProperty('--glass-blur',optimized?'7px':'26px');
+  r.style.setProperty('--glass-sat',optimized?'1':'1.3');
+  r.style.setProperty('--glass-btn-blur',optimized?'2px':'10px');
   document.body.dataset.theme=ST.settings.theme;
   document.body.classList.toggle('focus-mode',!!ST.settings.focusMode&&ST.activeTab==='player');
   document.body.classList.toggle('optimize-mode',optimized);
@@ -1704,9 +1764,9 @@ function bindEvents(){
   el.openSetBtn.onclick=()=>switchTab('settings');
   if(el.topGoogleBtn)el.topGoogleBtn.onclick=()=>toggleGoogleAccountAuth();
   if(el.heroGoogleBtn)el.heroGoogleBtn.onclick=()=>openGoogleConnect();
-  if(el.cloudHubBtn)el.cloudHubBtn.onclick=()=>switchTab('cloud');
+  if(el.cloudHubBtn)el.cloudHubBtn.onclick=()=>manualAccountSync();
   if(el.libraryGoogleBtn)el.libraryGoogleBtn.onclick=()=>openGoogleConnect();
-  if(el.libraryCloudOpenBtn)el.libraryCloudOpenBtn.onclick=()=>switchTab('cloud');
+  if(el.libraryCloudOpenBtn)el.libraryCloudOpenBtn.onclick=()=>manualAccountSync();
   // Files
   el.fileInput.onchange=e=>handleFiles(e.target.files);
   el.fileInput2.onchange=e=>handleFiles(e.target.files);
@@ -1749,6 +1809,7 @@ function bindEvents(){
   });
   el.resetEqBtn.onclick=resetEQ;
   el.presetRow.addEventListener('click',e=>{const b=e.target.closest('[data-preset]');if(b)applyPreset(b.dataset.preset)});
+  el.vizModeRow?.addEventListener('click',e=>{const b=e.target.closest('[data-viz]');if(!b)return;ST.vizStyle=b.dataset.viz;saveState();renderVizModes();renderFocus();});
   // Quality mode
   el.qualityGrid.addEventListener('click',e=>{const c=e.target.closest('[data-q]');if(c)setQualityMode(c.dataset.q)});
   // HTML export / import
@@ -1763,7 +1824,7 @@ function bindEvents(){
   document.addEventListener('dragenter',e=>{if(e.dataTransfer?.types?.includes('Files'))el.dropOverlay?.classList.add('visible')});
   document.addEventListener('dragover',e=>{e.preventDefault();if(e.dataTransfer?.types?.includes('Files'))el.dropOverlay?.classList.add('visible')});
   document.addEventListener('dragleave',e=>{if(e.target===document.documentElement||e.target===document.body)el.dropOverlay?.classList.remove('visible')});
-  document.addEventListener('drop',e=>{e.preventDefault();el.dropOverlay?.classList.remove('visible');const files=Array.from(e.dataTransfer?.files||[]).filter(f=>f.type.startsWith('audio/'));if(files.length)handleFiles(files)});
+  document.addEventListener('drop',e=>{e.preventDefault();el.dropOverlay?.classList.remove('visible');const files=Array.from(e.dataTransfer?.files||[]).filter(f=>f.type.startsWith('audio/')||isHtmlImportFile(f));if(files.length)handleFiles(files)});
   // Audio
   audio.onplay=()=>{ST.playing=true;el.cover.classList.add('playing');renderTransport();renderFocus();updateMini()};
   audio.onpause=()=>{ST.playing=false;el.cover.classList.remove('playing');saveState();renderTransport();renderFocus();updateMini()};
@@ -1820,21 +1881,89 @@ function setSpeed(spd){
 }
 
 // ── FILES ──────────────────────────────────────
-function handleFiles(files){
-  const fs=Array.from(files||[]).filter(f=>f.type.startsWith('audio/'));
-  if(!fs.length)return;
-  fs.forEach(f=>{
-    const p=parseName(f.name);
-    const id=`${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
-    ST.tracks.push({id,title:p.title,artist:p.artist,fileName:f.name,size:f.size,type:f.type||'audio',duration:0,favorite:false,playCount:0,addedAt:new Date().toISOString(),file:f});
-  });
-  if(!ST.cur&&ST.tracks[0])ST.cur=ST.tracks[0].id;
-  saveState();renderAll();switchTab('library');
+async function handleFiles(files){
+  const all=Array.from(files||[]);
+  if(!all.length)return 0;
+  const audioFiles=all.filter(f=>f.type.startsWith('audio/'));
+  const htmlFiles=all.filter(f=>isHtmlImportFile(f));
+  let added=0;
+  audioFiles.forEach(f=>{if(addTrackFileToLibrary(f))added++;});
+  for(const file of htmlFiles){
+    try{added+=await importHTMLArchive(file,true);}catch(e){console.warn('HTML import failed',file.name,e)}
+  }
+  if(added){
+    if(!ST.cur&&ST.tracks[0])ST.cur=ST.tracks[0].id;
+    saveState();renderAll();switchTab('library');
+  }
+  return added;
 }
 function parseName(n){
   const b=n.replace(/\.[^.]+$/,'');
   const p=b.split(/[-–—]/).map(v=>v.trim()).filter(Boolean);
   return p.length>=2?{artist:p[0],title:p.slice(1).join(' — ')}:{artist:'Неизвестный',title:b};
+}
+function isHtmlImportFile(file){
+  return file && (file.type.includes('html') || /\.(html?|xhtml)$/i.test(file.name||''));
+}
+function addTrackFileToLibrary(file, meta={}){
+  if(!(file instanceof File))return false;
+  const id=meta.id||`${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+  if(ST.tracks.find(t=>t.id===id))return false;
+  const parsed=parseName(meta.fileName||file.name);
+  ST.tracks.push({
+    id,
+    title:meta.title||parsed.title,
+    artist:meta.artist||parsed.artist,
+    fileName:meta.fileName||file.name,
+    size:meta.size||file.size,
+    type:meta.type||file.type||'audio/mpeg',
+    duration:meta.duration||0,
+    favorite:!!meta.favorite,
+    playCount:meta.playCount||0,
+    addedAt:meta.addedAt||new Date().toISOString(),
+    file
+  });
+  return true;
+}
+function dataUrlToFile(dataUrl,fileName='track.mp3'){
+  const match=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if(!match)return null;
+  const mime=match[1]||'audio/mpeg';
+  const raw=atob(match[2]);
+  const bytes=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+  return new File([bytes],fileName,{type:mime});
+}
+async function importHtmlSongDocument(file,text){
+  const doc=new DOMParser().parseFromString(text,'text/html');
+  const title=(doc.querySelector('title')?.textContent||file.name.replace(/\.[^.]+$/,'')).trim();
+  const sources=new Set();
+  [
+    ...doc.querySelectorAll('audio[src], source[src]'),
+    ...doc.querySelectorAll('a[href], meta[property="og:audio"], meta[name="twitter:player:stream"]')
+  ].forEach(node=>{
+    const raw=node.getAttribute('src')||node.getAttribute('href')||node.getAttribute('content');
+    if(raw)sources.add(raw.trim());
+  });
+  const inline=[...sources].find(src=>/^data:audio\//i.test(src));
+  if(inline){
+    const ext=((inline.match(/^data:audio\/([^;]+)/i)||[])[1]||'mp3').replace(/[^\w]+/g,'');
+    const songFile=dataUrlToFile(inline,`${title}.${ext}`);
+    if(songFile && addTrackFileToLibrary(songFile,{title,artist:'HTML-документ'}))return 1;
+  }
+  const remote=[...sources].find(src=>/^https?:\/\//i.test(src)&&(/\.((mp3)|(wav)|(ogg)|(m4a)|(aac)|(flac))(?:[?#]|$)/i.test(src)||/audio/i.test(src)));
+  if(remote){
+    try{
+      const res=await fetch(remote);
+      if(res.ok){
+        const blob=await res.blob();
+        const ext=((blob.type||'audio/mpeg').split('/')[1]||'mp3').replace(/[^\w]+/g,'');
+        const songFile=new File([blob],`${title}.${ext}`,{type:blob.type||'audio/mpeg'});
+        if(addTrackFileToLibrary(songFile,{title,artist:'HTML-документ'}))return 1;
+      }
+    }catch(e){console.warn('Remote HTML audio fetch failed',remote,e)}
+  }
+  return 0;
 }
 
 // ── TRACKS ─────────────────────────────────────
@@ -1927,12 +2056,13 @@ async function ensureAC(){
   if(AC.state==='suspended')await AC.resume();
 }
 function applyFx(){
+  const optimized=!!ST.settings.optimizationMode;
   if(fSub)fSub.gain.value=ST.settings.eqSub;
   if(fLow)fLow.gain.value=ST.settings.eqLow;
   if(fMid)fMid.gain.value=ST.settings.eqMid;
   if(fPres)fPres.gain.value=ST.settings.eqPres;
   if(fHigh)fHigh.gain.value=ST.settings.eqHigh;
-  if(sPanner)sPanner.pan.value=ST.settings.spatialAudio?Math.sin(performance.now()/(900-Math.min(ST.settings.spatialDepth*5,440)))*(ST.settings.spatialDepth/100)*.85:0;
+  if(sPanner)sPanner.pan.value=optimized?0:(ST.settings.spatialAudio?Math.sin(performance.now()/(900-Math.min(ST.settings.spatialDepth*5,440)))*(ST.settings.spatialDepth/100)*.85:0);
 }
 function resetEQ(){Object.keys(ST.settings).filter(k=>k.startsWith('eq')).forEach(k=>ST.settings[k]=0);applyFx();saveState();renderSoundLab();renderFocus()}
 function applyPreset(name){const p=PRESETS[name]||PRESETS.neutral;Object.assign(ST.settings,p);applyFx();saveState();renderSoundLab();renderFocus()}
@@ -1952,7 +2082,7 @@ function resizeCanvases(){
   el.eqCurveCanvas.width=ew;el.eqCurveCanvas.height=72;
 }
 
-function vizLabel(v){return({wave:'Водные линии',bars:'Световые столбы',line:'Эхолокация'})[v]||'Водные линии'}
+function vizLabel(v){return({wave:'Водные линии',bars:'Световые столбы',line:'Эхолиния',pulse:'Пульс',scope:'Осциллограф'})[v]||'Водные линии'}
 function qualityLabel(v){return QUALITY_CONFIGS[ST.settings.optimizationMode?'economy':v]?.label||'Исходный'}
 function sceneLabel(){
   if(ST.settings.theme==='night')return 'Night Dive';
@@ -1995,7 +2125,7 @@ function renderAll(){
   rebuildQueue();
   renderHome();renderHero();renderTransport();renderProgress();
   renderPlaylist();renderQueue();renderLib();
-  renderFavs();renderRecent();renderSoundLab();renderFocus();
+  renderFavs();renderRecent();renderVizModes();renderSoundLab();renderFocus();
   renderSettings();renderMeta();
 }
 function renderHome(){el.hTracks.textContent=ST.tracks.length;el.hFavs.textContent=ST.tracks.filter(t=>t.favorite).length;el.hRecent.textContent=ST.recent.length}
@@ -2007,39 +2137,47 @@ function renderCloudCTA(){
   el.cloudInlineStatus.className=`cloud-inline-status${isSyncing?' sync':isLogged?' online':''}`;
   if(el.topCloudStatus)el.topCloudStatus.className=`topStatusPill${isLogged?' online':''}`;
   if(isSyncing){
-    el.cloudInlineStatus.textContent='Идёт синхронизация';
-    el.cloudHeroTitle.textContent='Облако синхронизирует треки';
-    el.cloudHeroText.textContent='DELTA обновляет метаданные и аудиофайлы в вашем Google Drive.';
-    if(el.topCloudStatus)el.topCloudStatus.textContent='Синхронизация активна';
-    if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Обновить облако';
-    if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Синхронизировать';
+    el.cloudInlineStatus.textContent='Идёт резервное сохранение';
+    el.cloudHeroTitle.textContent='Библиотека синхронизируется';
+    el.cloudHeroText.textContent='DELTA обновляет песни и метаданные в вашем Google-аккаунте в фоновом режиме.';
+    if(el.topCloudStatus)el.topCloudStatus.textContent='Идёт резервное копирование';
+    if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Обновить вход';
+    if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Google подключён';
+    if(el.cloudHubBtn)el.cloudHubBtn.textContent='Синхронизация…';
+    if(el.libraryCloudOpenBtn)el.libraryCloudOpenBtn.textContent='Синхронизация…';
     return;
   }
   if(isLogged){
     const name=CLOUD.user?.name||'Google';
-    el.cloudInlineStatus.textContent='Подключено';
+    el.cloudInlineStatus.textContent='Автосохранение включено';
     el.cloudHeroTitle.textContent=`Аккаунт ${name} подключён`;
-    el.cloudHeroText.textContent='Новые локальные треки можно сохранять в Google Drive и восстанавливать на других устройствах через вкладку "Облако".';
-    if(el.topCloudStatus)el.topCloudStatus.textContent=`Подключён: ${name}`;
-    if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Открыть Google Drive Sync';
-    if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Открыть синхронизацию';
+    el.cloudHeroText.textContent='Новые локальные треки будут автоматически сохраняться и восстанавливаться при следующем заходе.';
+    if(el.topCloudStatus)el.topCloudStatus.textContent=`Бэкап активен: ${name}`;
+    if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Google подключён';
+    if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Google подключён';
+    if(el.cloudHubBtn)el.cloudHubBtn.textContent='Синхронизировать';
+    if(el.libraryCloudOpenBtn)el.libraryCloudOpenBtn.textContent='Резерв сейчас';
     return;
   }
   if(hasClient){
     el.cloudInlineStatus.textContent='Готово ко входу';
-    el.cloudHeroTitle.textContent='Можно войти через Google';
-    el.cloudHeroText.textContent='Client ID уже указан. Осталось авторизоваться, чтобы привязать песни к вашему аккаунту и включить синхронизацию.';
-    if(el.topCloudStatus)el.topCloudStatus.textContent='Можно войти в Google';
+    el.cloudHeroTitle.textContent='Можно подключить Google-аккаунт';
+    el.cloudHeroText.textContent='После входа DELTA будет тихо сохранять вашу библиотеку и восстанавливать песни при повторном запуске.';
+    if(el.topCloudStatus)el.topCloudStatus.textContent='Можно включить бэкап';
     if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Войти через Google';
     if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Войти через Google';
+    if(el.cloudHubBtn)el.cloudHubBtn.textContent='Подключить';
+    if(el.libraryCloudOpenBtn)el.libraryCloudOpenBtn.textContent='Подключить';
     return;
   }
   el.cloudInlineStatus.textContent='Ожидает настройки';
-  el.cloudHeroTitle.textContent='Подключите Google-аккаунт';
-  el.cloudHeroText.textContent='После входа DELTA сможет сохранять метаданные и ваши локальные треки в Google Drive. Client ID вы подключите сами, а интерфейс уже готов.';
-  if(el.topCloudStatus)el.topCloudStatus.textContent='Google Sync не настроен';
+  el.cloudHeroTitle.textContent='Google-аккаунт не настроен';
+  el.cloudHeroText.textContent='После входа DELTA сможет сохранять вашу библиотеку в аккаунт. Сейчас вход недоступен, пока не указан рабочий Client ID.';
+  if(el.topCloudStatus)el.topCloudStatus.textContent='Бэкап не настроен';
   if(el.heroGoogleBtn)el.heroGoogleBtn.textContent='Настроить Google Sync';
   if(el.libraryGoogleBtn)el.libraryGoogleBtn.textContent='Подключить Google';
+  if(el.cloudHubBtn)el.cloudHubBtn.textContent='Настроить';
+  if(el.libraryCloudOpenBtn)el.libraryCloudOpenBtn.textContent='Настроить';
 }
 function renderHero(){
   const t=curTrack();
@@ -2132,6 +2270,12 @@ function renderSoundLab(){
   renderQualityUI();
   drawEQCurve();
 }
+function renderVizModes(){
+  if(!el.vizModeRow)return;
+  el.vizModeRow.querySelectorAll('[data-viz]').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.viz===ST.vizStyle);
+  });
+}
 function renderFocus(){
   const t=curTrack();
   el.trackStateBadge.textContent=ST.playing?'● Играет':'Ожидание';
@@ -2144,7 +2288,7 @@ function renderFocus(){
   if(el.metaScene)el.metaScene.textContent=sceneLabel();
   if(el.metaViz)el.metaViz.textContent=vizLabel(ST.vizStyle);
   if(el.metaQuality)el.metaQuality.textContent=qualityLabel(ST.qualityMode);
-  if(el.metaCloud)el.metaCloud.textContent=cloudReady?.token?(cloudReady.syncing?'Синхронизация':'Google Drive'):t?.file instanceof File?'Локально':'Офлайн';
+  if(el.metaCloud)el.metaCloud.textContent=cloudReady?.token?(cloudReady.syncing?'Сохранение…':'Google Backup'):t?.file instanceof File?'Локально':'Офлайн';
 }
 function initGoogleAccount(){
   if(AUTH.token && AUTH.tokenExpiry <= Date.now()+60000){
@@ -2161,6 +2305,13 @@ function saveGoogleAccount(){
   localStorage.setItem('delta-google-auth-token', AUTH.token||'');
   localStorage.setItem('delta-google-auth-expiry', String(AUTH.tokenExpiry||0));
   localStorage.setItem('delta-google-auth-user', JSON.stringify(AUTH.user||null));
+  localStorage.setItem('delta-gclient', AUTH.clientId||DEFAULT_GOOGLE_CLIENT_ID);
+}
+function persistCloudSessionFromAuth(){
+  localStorage.setItem('delta-gclient', AUTH.clientId||DEFAULT_GOOGLE_CLIENT_ID);
+  localStorage.setItem('delta-gtoken', AUTH.token||'');
+  localStorage.setItem('delta-gexpiry', String(AUTH.tokenExpiry||0));
+  localStorage.setItem('delta-guser', JSON.stringify(AUTH.user||null));
 }
 function renderGoogleAccountUI(){
   const logged=isGoogleAccountLoggedIn();
@@ -2212,38 +2363,52 @@ function toggleGoogleAccountAuth(){
   startGoogleAccountAuth();
 }
 function startGoogleAccountAuth(){
-  if(!window.google?.accounts?.oauth2){
-    alert('Google API пока не загрузился. Проверьте интернет и попробуйте снова.');
-    return;
-  }
-  const client=google.accounts.oauth2.initTokenClient({
-    client_id: AUTH.clientId||DEFAULT_GOOGLE_CLIENT_ID,
-    scope:'openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-    callback: async tokenResponse=>{
-      if(tokenResponse.error){
-        alert(`Ошибка авторизации Google: ${tokenResponse.error}`);
-        return;
-      }
-      try{
-        AUTH.token=tokenResponse.access_token||'';
-        AUTH.tokenExpiry=Date.now()+((tokenResponse.expires_in||3600)*1000);
-        AUTH.user=await fetchGoogleAccountProfile(AUTH.token);
-        saveGoogleAccount();
-        renderGoogleAccountUI();
-      }catch(err){
-        console.warn('Google account auth failed',err);
-        alert('Не удалось получить профиль Google.');
-      }
-    }
+  const clientId = AUTH.clientId || DEFAULT_GOOGLE_CLIENT_ID;
+  const redirectUri = 'http://127.0.0.1:8734/oauth_callback';
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'token',
+    scope: 'openid https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.appdata',
+    prompt: 'select_account'
   });
-  client.requestAccessToken({prompt:AUTH.token?'':'consent'});
+  window.open(
+    'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString(),
+    'delta_auth',
+    'width=500,height=620,left='+Math.round((screen.width-500)/2)+',top='+Math.round((screen.height-620)/2)
+  );
+  const bc = new BroadcastChannel('delta_auth');
+  bc.onmessage = async function(e){
+    bc.close();
+    if(!e.data?.token) return;
+    AUTH.token = e.data.token;
+    AUTH.tokenExpiry = Date.now() + (e.data.expires_in||3600)*1000;
+    try{ AUTH.user = await fetchGoogleAccountProfile(AUTH.token); }
+    catch(err){ AUTH.user = {name:'Google User', email:'', picture:''}; }
+    saveGoogleAccount();
+    try{ persistCloudSessionFromAuth(); }catch(_){}
+    if(typeof CLOUD!=='undefined'){
+      CLOUD.clientId = clientId;
+      CLOUD.token = AUTH.token;
+      CLOUD.tokenExpiry = AUTH.tokenExpiry;
+      CLOUD.user = {name:AUTH.user?.name, email:AUTH.user?.email, picture:AUTH.user?.picture};
+    }
+    renderGoogleAccountUI();
+    if(typeof renderCloudUI==='function') renderCloudUI();
+    if(typeof manualAccountSync==='function'){
+      try{ await manualAccountSync({silent:false}); }catch(_){}
+    }
+  };
 }
 function googleAccountSignOut({silent=false}={}){
-  if(window.google?.accounts?.oauth2 && AUTH.token){
-    try{google.accounts.oauth2.revoke(AUTH.token,()=>{})}catch(_){}
-  }
   AUTH.token='';AUTH.tokenExpiry=0;AUTH.user=null;
   saveGoogleAccount();
+  localStorage.removeItem('delta-gtoken');
+  localStorage.removeItem('delta-gexpiry');
+  localStorage.removeItem('delta-guser');
+  if(typeof CLOUD!=='undefined'){
+    CLOUD.token=null;CLOUD.tokenExpiry=0;CLOUD.user=null;CLOUD.driveFolder=null;CLOUD.syncing=false;
+  }
   renderGoogleAccountUI();
   if(!silent)alert('Google аккаунт отключён.');
 }
@@ -2253,12 +2418,12 @@ function renderGoogleAccountCard(){
   const userEmail=AUTH.user?.email||'Вход не выполнен';
   const hint=logged
     ? `<span class="setHint good">Подключён как ${esc(userName)}</span>`
-    : `<span class="setHint">Обычная авторизация профиля, отдельно от Google Drive</span>`;
+    : `<span class="setHint">После входа библиотека сможет автоматически сохраняться в аккаунт</span>`;
   return `<div class="setCard">
     <div class="setHead">
       <div class="setTitleWrap">
         <div class="setIcon">G</div>
-        <div><strong>Google Account</strong><div class="setBody" style="margin:4px 0 0">Обычный вход в ваш Google-профиль без облачной синхронизации треков.</div></div>
+        <div><strong>Google Account</strong><div class="setBody" style="margin:4px 0 0">Вход в профиль и тихое резервное сохранение библиотеки без отдельной вкладки облака.</div></div>
       </div>
       <em>${logged?'Online':'Offline'}</em>
     </div>
@@ -2304,6 +2469,10 @@ function renderSettings(){
 }
 function renderMeta(){
   el.trackCount.textContent=`${ST.tracks.length} ${plurTracks(ST.tracks.length)} в медиатеке`;
+  if(typeof CLOUD!=='undefined' && CLOUD?.token && CLOUD.tokenExpiry>Date.now()){
+    el.storageInfo.textContent='Google-бэкап активен: библиотека восстанавливается при повторном входе';
+    return;
+  }
   el.storageInfo.textContent=ST.tracks.some(t=>!hasPlayableFile(t))?'На публичном сайте локальные файлы нужно выбирать заново после перезагрузки':'Метаданные синхронизированы';
 }
 function miniRow(t,icon,active=false){
@@ -2418,6 +2587,45 @@ function drawViz(){
       i?vizCtx.lineTo(x,y):vizCtx.moveTo(x,y);
     }
     vizCtx.strokeStyle=grad;vizCtx.lineWidth=2.4;vizCtx.stroke();
+  }else if(ST.vizStyle==='pulse'){
+    const bass=analyser&&ST.playing?((freqData[6]||0)+(freqData[12]||0))/510:(.25+Math.sin(performance.now()/640)*.12);
+    const mids=analyser&&ST.playing?(freqData[Math.floor(analyser.frequencyBinCount*.18)]||0)/255:(.2+Math.cos(performance.now()/900)*.1);
+    const rings=optimized?3:5;
+    for(let i=0;i<rings;i++){
+      const rr=(Math.min(W,H)*(.12+i*.07))+(bass*24)+(i*6);
+      vizCtx.beginPath();
+      vizCtx.arc(W*.5,H*.52,rr,0,Math.PI*2);
+      vizCtx.strokeStyle=`rgba(110,225,255,${0.26-(i*.035)})`;
+      vizCtx.lineWidth=Math.max(1.2,3.4-(i*.45));
+      vizCtx.shadowBlur=optimized?0:16;
+      vizCtx.shadowColor=i%2?g2:g1;
+      vizCtx.stroke();
+    }
+    vizCtx.shadowBlur=0;
+    const core=vizCtx.createRadialGradient(W*.5,H*.52,8,W*.5,H*.52,Math.min(W,H)*.18);
+    core.addColorStop(0,`rgba(255,255,255,${.32+bass*.2})`);
+    core.addColorStop(.45,`rgba(94,232,255,${.18+mids*.18})`);
+    core.addColorStop(1,'rgba(94,232,255,0)');
+    vizCtx.fillStyle=core;
+    vizCtx.beginPath();
+    vizCtx.arc(W*.5,H*.52,Math.min(W,H)*(.13+bass*.04),0,Math.PI*2);
+    vizCtx.fill();
+  }else if(ST.vizStyle==='scope'){
+    const lines=optimized?2:3;
+    for(let l=0;l<lines;l++){
+      vizCtx.beginPath();
+      for(let i=0;i<140;i++){
+        const r=i/139;
+        const base=H*(.34 + l*.16);
+        const v=analyser&&ST.playing?(waveData[Math.floor(r*(waveData.length-1))]-128)/128:Math.sin(performance.now()/680+i*.14+l)*.14;
+        const x=r*W;
+        const y=base+v*H*(.09+l*.02)*(.65+playing);
+        i?vizCtx.lineTo(x,y):vizCtx.moveTo(x,y);
+      }
+      vizCtx.strokeStyle=l===0?grad:`rgba(120,220,255,${0.34-l*.08})`;
+      vizCtx.lineWidth=l===0?2.4:1.2;
+      vizCtx.stroke();
+    }
   }else{
     const pts=[];
     const totalPts=optimized?96:160;
@@ -2440,7 +2648,7 @@ const QUALITY_CONFIGS={
     sampleRateHint:22050,
     label:'Экономный',
     info:'Экономный режим: уменьшенный анализатор (FFT 256), упрощённый визуализатор. Меньше нагрузки на процессор — удобно на слабых устройствах.',
-    vizBars:40,
+    vizBars:24,
     spatialOff:true
   },
   original:{
@@ -2624,35 +2832,46 @@ function openInDelta(){
 }
 
 // ── HTML IMPORT ──────────────────────────────────
-async function importHTMLArchive(file){
+async function importHTMLArchive(file,silent=false){
   if(!file)return;
   try{
     const text=await file.text();
     // Extract JSON from generated archive
     const match=text.match(/const TRACKS=(\[[\s\S]*?\]);/);
-    if(!match){alert('Это не архив DELTA. Файл должен быть создан через «Экспорт HTML».');return}
-    const tracks=JSON.parse(match[1]);
     let imported=0;
-    for(const t of tracks){
-      if(!t.b64||ST.tracks.find(x=>x.id===t.id))continue;
-      // Reconstruct File from base64
-      try{
-        const byteStr=atob(t.b64);
-        const ab=new ArrayBuffer(byteStr.length);
-        const view=new Uint8Array(ab);
-        for(let i=0;i<byteStr.length;i++)view[i]=byteStr.charCodeAt(i);
-        const blob=new Blob([ab],{type:t.type||'audio/mpeg'});
-        const f=new File([blob],t.fileName||`${t.title}.mp3`,{type:t.type||'audio/mpeg'});
-        ST.tracks.push({...t,file:f,playCount:t.playCount||0});
-        imported++;
-      }catch(e){console.warn('Failed to decode',t.title,e)}
+    if(match){
+      const tracks=JSON.parse(match[1]);
+      for(const t of tracks){
+        if(!t.b64||ST.tracks.find(x=>x.id===t.id))continue;
+        // Reconstruct File from base64
+        try{
+          const byteStr=atob(t.b64);
+          const ab=new ArrayBuffer(byteStr.length);
+          const view=new Uint8Array(ab);
+          for(let i=0;i<byteStr.length;i++)view[i]=byteStr.charCodeAt(i);
+          const blob=new Blob([ab],{type:t.type||'audio/mpeg'});
+          const f=new File([blob],t.fileName||`${t.title}.mp3`,{type:t.type||'audio/mpeg'});
+          if(addTrackFileToLibrary(f,t))imported++;
+        }catch(e){console.warn('Failed to decode',t.title,e)}
+      }
+    }else{
+      imported=await importHtmlSongDocument(file,text);
     }
-    if(!ST.cur&&ST.tracks[0])ST.cur=ST.tracks[0].id;
-    saveState();renderAll();
-    switchTab('library');
-    alert(`✓ Импортировано ${imported} трека(ов) из HTML-архива`);
-  }catch(e){alert('Ошибка при чтении файла: '+e.message)}
-  el.htmlImportInput.value='';
+    if(imported){
+      if(!ST.cur&&ST.tracks[0])ST.cur=ST.tracks[0].id;
+      saveState();renderAll();
+      switchTab('library');
+      if(!silent)alert(match?`✓ Импортировано ${imported} трека(ов) из HTML-архива`:`✓ Найден и импортирован трек из HTML-документа`);
+    }else if(!silent){
+      alert('Это не архив DELTA и внутри HTML не удалось найти доступный аудиофайл.');
+    }
+    return imported;
+  }catch(e){
+    if(!silent)alert('Ошибка при чтении файла: '+e.message);
+    return 0;
+  }finally{
+    if(el.htmlImportInput)el.htmlImportInput.value='';
+  }
 }
 
 // Listen for postMessage import from archive page
@@ -2716,6 +2935,12 @@ function initCloud(){
     CLOUD.token = savedToken;
     CLOUD.tokenExpiry = savedExpiry;
     try{ CLOUD.user = JSON.parse(localStorage.getItem('delta-guser')||'null'); }catch(_){}
+  }else if(AUTH.token && AUTH.tokenExpiry > Date.now()+60000){
+    CLOUD.clientId = AUTH.clientId||DEFAULT_GOOGLE_CLIENT_ID;
+    CLOUD.token = AUTH.token;
+    CLOUD.tokenExpiry = AUTH.tokenExpiry;
+    CLOUD.user = AUTH.user ? {name:AUTH.user.name,email:AUTH.user.email,picture:AUTH.user.picture} : null;
+    persistCloudSessionFromAuth();
   }
   renderCloudUI();
   bindCloudEvents();
@@ -2735,25 +2960,30 @@ function saveCloudMeta(){
 }
 
 function openGoogleConnect(){
-  switchTab('cloud');
   const hasClient=!!CLOUD.clientId;
   const isLogged=!!(CLOUD.token&&CLOUD.tokenExpiry>Date.now());
   if(!hasClient){
-    setTimeout(()=>{
-      const input=document.getElementById('clientIdInput');
-      input?.focus();
-      input?.scrollIntoView({behavior:'smooth',block:'center'});
-    },220);
+    alert('Google Client ID пока не настроен. Укажи рабочий Client ID в коде или локальном хранилище.');
     return;
   }
   if(isLogged){
-    setTimeout(()=>document.getElementById('syncNowBtn')?.focus(),220);
+    manualAccountSync();
     return;
   }
-  setTimeout(()=>{
-    renderGoogleBtn(true);
-    document.querySelector('#googleSignInBtn .google-btn')?.focus();
-  },220);
+  startGoogleAccountAuth();
+}
+
+async function manualAccountSync({silent=true}={}){
+  if(!(CLOUD.token && CLOUD.tokenExpiry > Date.now())){
+    if(!silent)alert('Сначала войди через Google.');
+    return;
+  }
+  if(CLOUD.syncing)return;
+  if(!silent)showSyncStatus('syncing','Сохраняю библиотеку в Google-аккаунт…');
+  await syncAll();
+  if(ST.settings.cloudAutoRestore!==false){
+    await restoreCloudTracksFromAccount({silent});
+  }
 }
 
 // ── Bind events ───────────────────────────────
@@ -2848,53 +3078,53 @@ function renderGoogleBtn(autoStart=false){
   const container = document.getElementById('googleSignInBtn');
   if(!container)return;
   container.innerHTML='';
-
-  // Check if google.accounts available
-  if(window.google?.accounts?.oauth2){
-    // Use Google Identity Services token client
-    const btn = document.createElement('button');
-    btn.className='google-btn';
-    btn.innerHTML=`<svg class="google-icon" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Войти через Google`;
-    btn.onclick = startGoogleOAuth;
-    container.appendChild(btn);
-    if(autoStart)setTimeout(()=>btn.click(),80);
-  } else {
-    // GIS not loaded yet, retry
-    setTimeout(()=>renderGoogleBtn(autoStart), 800);
-  }
+  const btn = document.createElement('button');
+  btn.className='google-btn';
+  btn.innerHTML=`<svg class="google-icon" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Войти через Google`;
+  btn.onclick = startGoogleOAuth;
+  container.appendChild(btn);
+  if(autoStart) setTimeout(()=>btn.click(), 80);
 }
 
-// ── OAuth 2.0 Token Flow ───────────────────────
+// ── OAuth 2.0 — redirect через localhost ───────
+const DELTA_OAUTH_PORT = 8734;
+
 function startGoogleOAuth(){
-  if(!window.google?.accounts?.oauth2){
-    showSyncStatus('error','Google API не загружен. Проверь интернет-соединение.');
+  if(!CLOUD.clientId){
+    showSyncStatus('error','Сначала введи Client ID');
     return;
   }
-  const client = google.accounts.oauth2.initTokenClient({
+  const redirectUri = 'http://127.0.0.1:' + DELTA_OAUTH_PORT + '/oauth_callback';
+  const params = new URLSearchParams({
     client_id: CLOUD.clientId,
+    redirect_uri: redirectUri,
+    response_type: 'token',
     scope: 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-    callback: async (tokenResponse) => {
-      if(tokenResponse.error){
-        showSyncStatus('error', `Ошибка авторизации: ${tokenResponse.error}`);
-        return;
-      }
-      CLOUD.token = tokenResponse.access_token;
-      CLOUD.tokenExpiry = Date.now() + (tokenResponse.expires_in||3600)*1000;
-      localStorage.setItem('delta-gtoken', CLOUD.token);
-      localStorage.setItem('delta-gexpiry', String(CLOUD.tokenExpiry));
-      // Fetch user profile
-      await fetchUserProfile();
-      showSyncStatus('syncing','Авторизован! Загружаю метаданные…');
-      renderCloudUI();
-      await syncMetaFromDrive();
-      if(ST.settings.cloudAutoRestore!==false){
-        await restoreCloudTracksFromAccount({silent:false});
-      }
-      showSyncStatus('done','Подключено к Google Drive ✓');
-      renderCloudUI();
-    }
+    prompt: 'select_account'
   });
-  client.requestAccessToken({prompt:CLOUD.token ? '' : 'consent'});
+  const w = window.open(
+    'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString(),
+    'delta_auth',
+    'width=500,height=620,left='+Math.round((screen.width-500)/2)+',top='+Math.round((screen.height-620)/2)
+  );
+  const bc = new BroadcastChannel('delta_auth');
+  bc.onmessage = async function(e){
+    bc.close();
+    if(!e.data?.token) return;
+    CLOUD.token = e.data.token;
+    CLOUD.tokenExpiry = Date.now() + (e.data.expires_in||3600)*1000;
+    localStorage.setItem('delta-gtoken', CLOUD.token);
+    localStorage.setItem('delta-gexpiry', String(CLOUD.tokenExpiry));
+    await fetchUserProfile();
+    showSyncStatus('syncing','Авторизован! Загружаю метаданные…');
+    renderCloudUI();
+    await syncMetaFromDrive();
+    if(ST.settings.cloudAutoRestore!==false){
+      await restoreCloudTracksFromAccount({silent:false});
+    }
+    showSyncStatus('done','Подключено к Google Drive ✓');
+    renderCloudUI();
+  };
 }
 
 async function fetchUserProfile(){
@@ -2908,9 +3138,6 @@ async function fetchUserProfile(){
 }
 
 function cloudSignOut(){
-  if(window.google?.accounts?.oauth2){
-    google.accounts.oauth2.revoke(CLOUD.token||'', ()=>{});
-  }
   CLOUD.token=null;CLOUD.tokenExpiry=0;CLOUD.user=null;CLOUD.driveFolder=null;
   localStorage.removeItem('delta-gtoken');
   localStorage.removeItem('delta-gexpiry');
@@ -3259,35 +3486,84 @@ async function deleteFromCloud(id){
 function showSyncStatus(type, text){
   const el=document.getElementById('syncStatusEl');
   const tel=document.getElementById('syncStatusText');
-  if(!el||!tel)return;
-  el.className='sync-status '+type;
-  tel.textContent=text;
+  if(el&&tel){
+    el.className='sync-status '+type;
+    tel.textContent=text;
+  }
+  if(document.getElementById('topCloudStatus'))document.getElementById('topCloudStatus').textContent=text;
   renderCloudCTA();
   renderFocus();
 }
 
-// ── Auto-sync after upload ────────────────────
+// ── Auto-sync after upload + Local Save ────────────────────
 const _origHandleFiles=handleFiles;
-window.handleFiles=function(files){
-  _origHandleFiles(files);
-  // Auto-upload to cloud if logged in
+window.handleFiles=async function(files){
+  // 1. Сначала работает стандартная загрузка (создаются треки)
+  await _origHandleFiles(files);
+
+  // 2. [ШАГ 2] Сохраняем новые файлы в IndexedDB, чтобы они не пропадали
+  for (const file of files) {
+    const track = ST.tracks.find(t => t.title === file.name.replace(/\.[^/.]+$/, ""));
+    if (track) {
+      await saveTrackToDB(track, file);
+      console.log("DELTA: Трек сохранен локально:", track.title);
+    }
+  }
+
+  // 3. Дальше твой старый код для облака (Google Drive)
   if(CLOUD.token && CLOUD.tokenExpiry > Date.now()){
     setTimeout(async()=>{
       const newTracks=ST.tracks.filter(t=>t.file instanceof File&&!CLOUD.cloudMeta[t.id]);
       if(!newTracks.length)return;
-      showSyncStatus('syncing',`Авто-загрузка в облако (${newTracks.length} трека)…`);
+      showSyncStatus('syncing',`Автосохранение (${newTracks.length} ${plurTracks(newTracks.length)})…`);
       for(const t of newTracks){
         try{ await uploadTrackToDrive(t); }catch(e){console.warn(e)}
       }
       await uploadMeta();
-      showSyncStatus('done',`Треки сохранены в облаке ✓`);
+      showSyncStatus('done',`Библиотека сохранена в аккаунте ✓`);
       renderCloudTracks();renderCloudStats();
     }, 1500);
   }
 };
-
+// [ШАГ 3] Достаем музыку из памяти при загрузке страницы
+window.addEventListener('load', async () => {
+  const savedTracks = await loadTracksFromDB();
+  if (savedTracks && savedTracks.length > 0) {
+    savedTracks.forEach(t => {
+      // Превращаем сохраненный файл обратно в рабочую ссылку
+      t.url = URL.createObjectURL(t.file);
+      ST.tracks.push(t);
+    });
+    renderTracks(); // Рисуем список песен
+    console.log("DELTA: Музыка восстановлена из локальной памяти!");
+  }
+});
 // Init cloud after main init
+// --- ИСПРАВЛЕННЫЙ БЛОК ЗАПУСКА ---
+
+// 1. Сначала запускаем основу плеера
+init();
+
+// 2. Затем запускаем облако (чтобы появился тот самый CLOUD)
 initCloud();
+
+// 3. Ждем 100 миллисекунд (мгновение), чтобы всё точно загрузилось,
+// и только потом выводим сохраненные песни на экран.
+setTimeout(async () => {
+    try {
+        const savedTracks = await loadTracksFromDB();
+        if (savedTracks && savedTracks.length > 0) {
+            savedTracks.forEach(t => {
+                t.url = URL.createObjectURL(t.file);
+                ST.tracks.push(t);
+            });
+            renderTracks();
+            console.log("DELTA: Локальные треки восстановлены!");
+        }
+    } catch (e) {
+        console.warn("Ошибка при автозагрузке:", e);
+    }
+}, 100);
 </script>
 </body>
 </html>
